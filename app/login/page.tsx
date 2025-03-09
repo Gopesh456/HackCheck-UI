@@ -141,6 +141,83 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#192226]">
+      {/* Sleek background design */}
+      <div className="absolute inset-0 overflow-hidden bg-design">
+        <svg
+          className="absolute w-full h-full opacity-20"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 1200 800"
+        >
+          {/* Curved lines */}
+          <path
+            d="M-100,200 C200,150 300,50 1300,250"
+            className="animated-line"
+            stroke="#EAB308"
+            strokeWidth="1.4"
+            fill="none"
+          />
+          <path
+            d="M-100,400 C100,350 700,550 1300,450"
+            className="animated-line"
+            stroke="#EAB308"
+            strokeWidth="1.4"
+            fill="none"
+            style={{ animationDelay: "0.2s" }}
+          />
+          <path
+            d="M-100,600 C400,750 900,650 1300,600"
+            className="animated-line"
+            stroke="#EAB308"
+            strokeWidth="1.4"
+            fill="none"
+            style={{ animationDelay: "0.4s" }}
+          />
+
+          {/* Geometric elements */}
+          <circle
+            cx="10%"
+            cy="20%"
+            r="50"
+            className="geometric"
+            fill="rgba(234, 179, 8, 0.03)"
+          />
+          <circle
+            cx="80%"
+            cy="70%"
+            r="100"
+            className="geometric"
+            fill="rgba(234, 179, 8, 0.02)"
+          />
+          <rect
+            x="70%"
+            y="10%"
+            width="150"
+            height="150"
+            className="geometric"
+            fill="rgba(234, 179, 8, 0.01)"
+          />
+
+          {/* Grid pattern */}
+          <pattern
+            id="grid"
+            x="0"
+            y="0"
+            width="40"
+            height="40"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect x="0" y="0" width="40" height="40" fill="none" />
+            <path
+              d="M 40 0 L 0 0 0 40"
+              stroke="rgba(234, 179, 8, 0.05)"
+              strokeWidth="5"
+              fill="none"
+            />
+          </pattern>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
       {/* Cursor blob */}
       <div
         className={`cursor-blob ${isPointer ? "cursor-pointer" : ""}`}
@@ -151,8 +228,7 @@ export default function Login() {
         style={{ left: cursorPosition.x, top: cursorPosition.y }}
       ></div>
 
-      <div className="absolute inset-0 overflow-hidden"></div>
-      <div className="relative z-10 bg-[#172024] p-5 box-content grid justify-center align-middle rounded-[70px] shadow-lg sm:w-80 sm:h-96">
+      <div className="relative z-10 bg-[#172024] p-5 box-content grid justify-center align-middle rounded-[70px] shadow-lg sm:w-80 sm:h-96 opacity-86 backdrop-blur-xl">
         <div className="w-full rounded-[50px] flex flex-col items-center justify-center h-full">
           <div className="eyes-container mb-6">
             <div
@@ -342,6 +418,46 @@ export default function Login() {
         button,
         [role="button"] {
           cursor: none;
+        }
+
+        .bg-design {
+          background: linear-gradient(
+            135deg,
+            rgba(25, 34, 38, 1) 0%,
+            rgba(23, 32, 36, 1) 100%
+          );
+        }
+
+        .animated-line {
+          stroke-dasharray: 1500;
+          stroke-dashoffset: 1500;
+          animation: draw 4s forwards alternate ease-in-out;
+          opacity: 1;
+        }
+
+        .geometric {
+          animation: pulse 8s infinite alternate;
+        }
+
+        @keyframes draw {
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes pulse {
+          0% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.5;
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
         }
       `}</style>
     </div>
