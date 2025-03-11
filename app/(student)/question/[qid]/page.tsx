@@ -50,12 +50,20 @@ const QuestionPage = () => {
   const handleSave = () => {
     localStorage.setItem(savedCode, code);
     // alert("Code saved successfully!");
-    toast.success("Code saved successfully!", {
+    toast.success("Code saved successfully!", {});
+  };
+  const handleSubmit = () => {
+    localStorage.setItem(savedCode, code);
+
+    toast.success("Code submitted successfully!", {
       style: {
         backgroundColor: "#088255",
         color: "white",
       },
     });
+  };
+  const handleRun = () => {
+    // alert("Code submitted successfully!");
   };
   useEffect(() => {
     if (localStorage.getItem(savedCode)) {
@@ -170,19 +178,26 @@ const QuestionPage = () => {
               />
             </div>
             <div className="flex w-full gap-2 bg-[#151616] my-1 rounded-md p-2">
-                <div className="flex justify-between w-full">
+              <div className="flex justify-between w-full">
                 <Button variant={"outline"} className="bg-transparent dark">
                   Upload Code as a File
                 </Button>
                 <div className="flex gap-2">
-                  <Button variant={"secondary"} className="dark">
-                  Run Code
+                  <Button
+                    variant={"secondary"}
+                    className="dark"
+                    onClick={handleRun}
+                  >
+                    Run Code
                   </Button>
-                  <Button className="text-white bg-green-500 hover:bg-green-700">
-                  Submit Code
+                  <Button
+                    className="text-white bg-green-500 hover:bg-green-700"
+                    onClick={handleSubmit}
+                  >
+                    Submit Code
                   </Button>
                 </div>
-                </div>
+              </div>
             </div>
           </div>
         </ResizablePanel>
