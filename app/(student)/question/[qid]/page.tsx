@@ -1,7 +1,12 @@
+"use client";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import Navbar from "@/components/navbar";
-
+import CodeMirror from "@uiw/react-codemirror";
+import { vscodeDark } from "@uiw/codemirror-theme-vscode";
+import { python } from "@codemirror/lang-python";
+import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
+import { EditorView } from "@codemirror/view";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -9,10 +14,21 @@ import {
 } from "@/components/ui/resizable";
 
 const QuestionPage = () => {
+  // Define a custom EditorView theme for font size
+  const customTheme = EditorView.theme({
+    "&": {
+      fontSize: "16px",
+    },
+  });
+
   const problem = {
     question:
       "# Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print('hello')`  ",
   };
+
+  // Initial Python code template
+  const initialCode = `# Write your Python code here
+`;
 
   return (
     <div className="bg-[#020609] text-white">
@@ -75,8 +91,30 @@ const QuestionPage = () => {
         </ResizablePanel>
         <ResizableHandle withHandle className="w-[0.2rem] dark" />
         <ResizablePanel defaultSize={50}>
-          <div className="flex justify-center h-full p-6">
-            <span className="font-semibold">IDE</span>
+          <div className="w-full h-full p-6">
+            <CodeMirror
+              value={initialCode}
+              theme={vscodeDark}
+              height="90vh"
+              width="100%"
+              className="h-full text-base border border-gray-800 rounded-md"
+              extensions={[
+                python(),
+                customTheme,
+                autocompletion({ activateOnTyping: true }),
+                closeBrackets(),
+                EditorView.lineWrapping,
+              ]}
+              basicSetup={{
+                lineNumbers: true,
+                highlightActiveLine: true,
+                foldGutter: true,
+                autocompletion: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                indentOnInput: true,
+              }}
+            />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
