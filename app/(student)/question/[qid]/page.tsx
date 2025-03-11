@@ -269,7 +269,7 @@ const QuestionPage = () => {
     if (!file) return;
 
     // Check if file is a Python file
-    if (!file.name.endsWith(".py")) {
+    if (!file.name.lowerCase.endsWith(".py")) {
       toast.error("Please upload a Python (.py) file", {
         style: { backgroundColor: "#d32f2f", color: "white" },
       });
