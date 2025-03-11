@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import Navbar from "@/components/navbar";
 import dynamic from "next/dynamic";
@@ -33,7 +33,7 @@ const QuestionPage = () => {
 
   const problem = {
     question:
-      "# Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print('hello')`   Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print('hello')`  ",
+      "# Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print(input())`   Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print('hello')`  ",
   };
 
   // Initial Python code template
@@ -64,12 +64,41 @@ const QuestionPage = () => {
     },
   ];
 
+  // Define hidden test cases for submission evaluation
+  const hiddenTestCases = [
+    {
+      id: 1,
+      input: "20",
+      expectedOutput: "20",
+    },
+    {
+      id: 2,
+      input: "Hello World",
+      expectedOutput: "Hello World",
+    },
+    {
+      id: 3,
+      input: "3.14",
+      expectedOutput: "3.14",
+    },
+    {
+      id: 4,
+      input: "True",
+      expectedOutput: "True",
+    },
+  ];
+
   const [fullscreen, setFullscreen] = useState(false);
   const [code, setCode] = useState(initialCode);
   const [key, setKey] = useState(0);
   const [testResults, setTestResults] = useState([...testCases]);
   const [isLoading, setIsLoading] = useState(false);
   const [showTestResults, setShowTestResults] = useState(false);
+  const [allHiddenTestsPassed, setAllHiddenTestsPassed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reference to file input element
+  const fileInputRef = useRef(null);
 
   const handleReset = () => {
     setCode(initialCode);
@@ -82,14 +111,54 @@ const QuestionPage = () => {
     localStorage.setItem(savedCode, code);
     toast.success("Code saved successfully!", {});
   };
-  const handleSubmit = () => {
+
+  // Function to run code against hidden test cases
+  const runHiddenTests = async (userCode) => {
+    let allPassed = true;
+
+    for (const testCase of hiddenTestCases) {
+      try {
+        const output = await runCodeWithInput(userCode, testCase.input);
+
+        // Check if there was an error in the execution
+        const hasError = output.startsWith("Error:");
+        const isPassing =
+          !hasError && output.trim() === testCase.expectedOutput.trim();
+
+        if (!isPassing) {
+          allPassed = false;
+          break; // No need to run more tests once one fails
+        }
+      } catch (error) {
+        allPassed = false;
+        break;
+      }
+    }
+
+    return allPassed;
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     localStorage.setItem(savedCode, code);
+
+    // Run hidden tests
+    const passed = await runHiddenTests(code);
+    setAllHiddenTestsPassed(passed);
+
+    // You can later send this value to your backend
+    console.log("All hidden tests passed:", passed);
+
+    setIsSubmitting(false);
 
     toast.success("Code submitted successfully!", {
       style: {
-        backgroundColor: "#088255",
+        backgroundColor: passed ? "#088255" : "#d32f2f",
         color: "white",
       },
+      description: passed
+        ? "All tests passed!"
+        : "Some tests failed. Try again!!",
     });
   };
 
@@ -187,6 +256,43 @@ const QuestionPage = () => {
 
     setTestResults(updatedTestResults);
     setIsLoading(false);
+  };
+
+  // Handle file upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check if file is a Python file
+    if (!file.name.endsWith(".py")) {
+      toast.error("Please upload a Python (.py) file", {
+        style: { backgroundColor: "#d32f2f", color: "white" },
+      });
+      return;
+    }
+
+    // Read the file content
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      setCode(content);
+      setKey((prevKey) => prevKey + 1); // Force editor refresh
+      toast.success(`File "${file.name}" uploaded successfully!`);
+    };
+    reader.onerror = () => {
+      toast.error("Error reading file", {
+        style: { backgroundColor: "#d32f2f", color: "white" },
+      });
+    };
+    reader.readAsText(file);
+
+    // Reset file input value so the same file can be uploaded again
+    event.target.value = null;
   };
 
   useEffect(() => {
@@ -399,7 +505,11 @@ const QuestionPage = () => {
 
             <div className="flex w-full gap-2 bg-[#151616] my-1 rounded-md p-2">
               <div className="flex justify-between w-full">
-                <Button variant={"outline"} className="bg-transparent dark">
+                <Button
+                  variant={"outline"}
+                  className="bg-transparent dark"
+                  onClick={handleUploadClick}
+                >
                   Upload Code as a File
                 </Button>
                 <div className="flex gap-2">
@@ -414,8 +524,9 @@ const QuestionPage = () => {
                   <Button
                     className="text-white bg-green-500 hover:bg-green-700"
                     onClick={handleSubmit}
+                    disabled={isSubmitting}
                   >
-                    Submit Code
+                    {isSubmitting ? "Submitting..." : "Submit Code"}
                   </Button>
                 </div>
               </div>
@@ -423,6 +534,14 @@ const QuestionPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".py"
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </div>
   );
 };
