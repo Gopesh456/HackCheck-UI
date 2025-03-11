@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import Navbar from "@/components/navbar";
 import dynamic from "next/dynamic";
@@ -10,6 +10,8 @@ import { EditorView } from "@codemirror/view";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
+import Script from "next/script";
+import { X } from "lucide-react";
 
 import {
   ResizableHandle,
@@ -37,19 +39,47 @@ const QuestionPage = () => {
   // Initial Python code template
   const initialCode = `# Write your Python code here\n`;
 
+  // Define test cases
+  const testCases = [
+    {
+      id: 1,
+      input: "10",
+      expectedOutput: "10",
+      actualOutput: "",
+      status: null, // will be "pass" or "fail"
+    },
+    {
+      id: 2,
+      input: "5",
+      expectedOutput: "5",
+      actualOutput: "",
+      status: null,
+    },
+    {
+      id: 3,
+      input: "Hello",
+      expectedOutput: "Hello",
+      actualOutput: "",
+      status: null,
+    },
+  ];
+
   const [fullscreen, setFullscreen] = useState(false);
   const [code, setCode] = useState(initialCode);
-  const [key, setKey] = useState(0); // Add a key state
+  const [key, setKey] = useState(0);
+  const [testResults, setTestResults] = useState([...testCases]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showTestResults, setShowTestResults] = useState(false);
 
   const handleReset = () => {
     setCode(initialCode);
-    setKey((prevKey) => prevKey + 1); // Update the key to force re-render
+    setKey((prevKey) => prevKey + 1);
+    setTestResults([...testCases]); // Reset test results
   };
 
   const savedCode = "savedCode" + useParams().qid;
   const handleSave = () => {
     localStorage.setItem(savedCode, code);
-    // alert("Code saved successfully!");
     toast.success("Code saved successfully!", {});
   };
   const handleSubmit = () => {
@@ -62,9 +92,103 @@ const QuestionPage = () => {
       },
     });
   };
-  const handleRun = () => {
-    // alert("Code submitted successfully!");
+
+  const runCodeWithInput = async (code, input) => {
+    return new Promise((resolve, reject) => {
+      let outputText = "";
+      let inputIndex = 0;
+      let inputLines = input.toString().split("\n");
+
+      function outf(text) {
+        outputText += text;
+      }
+
+      function builtinRead(x) {
+        if (x !== "<stdin>") {
+          if (
+            window.Sk.builtinFiles === undefined ||
+            window.Sk.builtinFiles["files"][x] === undefined
+          ) {
+            throw "File not found: '" + x + "'";
+          }
+          return window.Sk.builtinFiles["files"][x];
+        }
+
+        // Return the predefined input
+        if (inputIndex < inputLines.length) {
+          return inputLines[inputIndex++];
+        }
+        return "";
+      }
+
+      // Prepare Skulpt
+      window.Sk.configure({
+        output: outf,
+        read: builtinRead,
+        __future__: window.Sk.python3,
+        inputfun: function () {
+          // This prevents actual prompting for input
+          if (inputIndex < inputLines.length) {
+            return inputLines[inputIndex++];
+          }
+          return "";
+        },
+      });
+
+      // Run the original code as-is
+      window.Sk.misceval
+        .asyncToPromise(() => {
+          return window.Sk.importMainWithBody("<stdin>", false, code, true);
+        })
+        .then(() => {
+          resolve(outputText.trim());
+        })
+        .catch((error) => {
+          // Any exception means the test case failed
+          resolve(`Error: ${error.toString()}`);
+        });
+    });
   };
+
+  const handleRun = async () => {
+    setIsLoading(true);
+    setShowTestResults(true); // Show test results when running tests
+
+    // Create a copy of test cases to update
+    const updatedTestResults = [...testResults];
+
+    // Run each test case
+    for (let i = 0; i < testCases.length; i++) {
+      const testCase = testCases[i];
+      try {
+        const output = await runCodeWithInput(code, testCase.input);
+
+        // Check if there was an error in the execution
+        const hasError = output.startsWith("Error:");
+
+        updatedTestResults[i] = {
+          ...testCase,
+          actualOutput: output,
+          // If there's an error, mark as failed immediately
+          status: hasError
+            ? "fail"
+            : output.trim() === testCase.expectedOutput.trim()
+            ? "pass"
+            : "fail",
+        };
+      } catch (error) {
+        updatedTestResults[i] = {
+          ...testCase,
+          actualOutput: `Error: ${error.toString()}`,
+          status: "fail",
+        };
+      }
+    }
+
+    setTestResults(updatedTestResults);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     if (localStorage.getItem(savedCode)) {
       setCode(localStorage?.getItem(savedCode) || initialCode);
@@ -72,8 +196,17 @@ const QuestionPage = () => {
       setCode(initialCode);
     }
   }, []);
+
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
+      <Script
+        src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"
+        strategy="beforeInteractive"
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"
+        strategy="beforeInteractive"
+      />
       <Navbar />
       <ResizablePanelGroup
         direction="horizontal"
@@ -138,8 +271,8 @@ const QuestionPage = () => {
         </ResizablePanel>
         <ResizableHandle withHandle className="w-[0.2rem] dark" />
         <ResizablePanel defaultSize={55}>
-          <div className="w-full h-full p-6">
-            <div className="flex justify-end w-full gap-2 bg-[#151616] mb-3 rounded-md p-2">
+          <div className="w-full p-6 overflow-y-auto h-[90vh]">
+            <div className="flex justify-end w-full gap-2 bg-[#151616] mb-3 rounded-md p-2 ">
               <Button
                 onClick={() => {
                   setFullscreen(!fullscreen);
@@ -152,10 +285,10 @@ const QuestionPage = () => {
             </div>
             <div>
               <CodeMirror
-                key={key} // Use the key state here
+                key={key}
                 value={code}
                 theme={vscodeDark}
-                height="60vh"
+                height={showTestResults ? "40vh" : "60vh"} // Adjust height based on test results visibility
                 width="100%"
                 className="h-full text-baserounded-md"
                 extensions={[
@@ -177,6 +310,93 @@ const QuestionPage = () => {
                 onChange={(value) => setCode(value)}
               />
             </div>
+
+            {/* Test Results Area - Only shown when showTestResults is true */}
+            {showTestResults && (
+              <div className="mt-4 mb-2 bg-[#0d1117] border border-gray-700 rounded-md">
+                <div className="px-4 py-2 bg-[#161b22] border-b border-gray-700 font-mono text-sm flex items-center rounded-t-md justify-between">
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => setShowTestResults(false)}
+                      className="p-1 mr-3 rounded-md hover:bg-gray-700"
+                      aria-label="Close test results"
+                    >
+                      <X size={16} />
+                    </button>
+                    <span>Test Results</span>
+                  </div>
+                  <span className="text-xs">
+                    {
+                      testResults.filter((test) => test.status === "pass")
+                        .length
+                    }{" "}
+                    / {testResults.length} Passed
+                  </span>
+                </div>
+                <div className="p-4 h-[20vh] overflow-y-auto">
+                  {isLoading ? (
+                    <div className="py-4 text-center">Running tests...</div>
+                  ) : (
+                    <div className="flex flex-col space-y-3">
+                      {testResults.map((test) => (
+                        <div
+                          key={test.id}
+                          className={`border rounded-md p-3 ${
+                            test.status === "pass"
+                              ? "border-green-500 bg-green-900/20"
+                              : test.status === "fail"
+                              ? "border-red-500 bg-red-900/20"
+                              : "border-gray-600"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold">
+                              Test Case {test.id}
+                            </span>
+                            {test.status && (
+                              <span
+                                className={`px-2 py-1 text-xs rounded-full ${
+                                  test.status === "pass"
+                                    ? "bg-green-500"
+                                    : "bg-red-500"
+                                }`}
+                              >
+                                {test.status === "pass" ? "Passed" : "Failed"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <div className="mb-1 text-gray-400">Input:</div>
+                              <div className="p-2 font-mono rounded bg-black/30">
+                                {test.input}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="mb-1 text-gray-400">
+                                Expected:
+                              </div>
+                              <div className="p-2 font-mono rounded bg-black/30">
+                                {test.expectedOutput}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="mb-1 text-gray-400">
+                                Your Output:
+                              </div>
+                              <div className="p-2 overflow-x-auto font-mono rounded bg-black/30">
+                                {test.actualOutput || "-"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex w-full gap-2 bg-[#151616] my-1 rounded-md p-2">
               <div className="flex justify-between w-full">
                 <Button variant={"outline"} className="bg-transparent dark">
@@ -187,8 +407,9 @@ const QuestionPage = () => {
                     variant={"secondary"}
                     className="dark"
                     onClick={handleRun}
+                    disabled={isLoading}
                   >
-                    Run Code
+                    {isLoading ? "Running Tests..." : "Run Tests"}
                   </Button>
                   <Button
                     className="text-white bg-green-500 hover:bg-green-700"

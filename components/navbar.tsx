@@ -31,7 +31,7 @@ const Navbar = () => {
 
         {/* Timer */}
         <motion.div
-          className="text-xl font-mono bg-[#1F202A] text-[#EAB308] py-2 px-6 rounded-lg border border-gray-700 relative left-14"
+          className="text-xl font-mono bg-[#020609] text-[#EAB308] py-2 px-6 rounded-lg border border-gray-700 relative left-14"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
@@ -95,9 +95,9 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-            <Button className="flex items-center px-5 font-medium">
-              <span>Logout</span>
-            </Button>
+          <Button className="flex items-center px-5 font-medium">
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </nav>
