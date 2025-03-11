@@ -3,29 +3,34 @@
 import React from "react";
 
 import Navbar from "@/components/navbar"; // Import the Navbar component
+import Link from "next/link";
 
 // import AcmeLogo from "../components/AcmeLogo";
 
 const questions = [
   {
+    id: 1,
     title: "Correlation and Regression Lines - A Quick Recap #1",
     difficulty: "Medium",
     Score: 0,
     Status: "Incomplete",
   },
   {
+    id: 2,
     title: "Day 6: Multiple Linear Regression: Predicting House Prices",
     difficulty: "Expert",
     Score: 0,
     Status: "Incomplete",
   },
   {
+    id: 3,
     title: "Correlation and Regression Lines - A Quick Recap #2",
     difficulty: "Medium",
     Score: 0,
     Status: "Incomplete",
   },
   {
+    id: 4,
     title: "Polynomial Regression: Office Prices",
     difficulty: "Easy",
     Score: 0,
@@ -34,26 +39,12 @@ const questions = [
 ];
 
 const Dashboard = () => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
-  const menuItems = [
-    "Profile",
-    "Dashboard",
-    "Activity",
-    "Analytics",
-    "System",
-    "Deployments",
-    "My Settings",
-    "Team Settings",
-    "Help & Feedback",
-    "Log Out",
-  ];
   return (
     <>
       <div className="bg-[#121418]">
         <Navbar />
         <div className="bg-[#121418] text-white p-5 h-dvh dark px-30">
-          <div className="text-4xl font-bold dark:text-white pl-3 border-l-4 border-l-white ">
+          <div className="pl-3 text-4xl font-bold border-l-4 dark:text-white border-l-white ">
             Hackathon Questions
           </div>
           <br />
@@ -85,9 +76,11 @@ const Dashboard = () => {
                   <span className="ml-4">Status: {question.Status}</span>
                 </span>
               </div>
-              <button className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
-                Solve Challenge
-              </button>
+              <Link href={`/question/${question.id}`}>
+                <button className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300   rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
+                  Solve Challenge
+                </button>
+              </Link>
             </div>
           ))}
         </div>
