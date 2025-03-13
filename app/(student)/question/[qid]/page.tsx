@@ -96,6 +96,7 @@ const QuestionPage = () => {
   const [showTestResults, setShowTestResults] = useState(false);
   const [allHiddenTestsPassed, setAllHiddenTestsPassed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skulptLoaded, setSkulptLoaded] = useState(false);
 
   // Reference to file input element
   const fileInputRef = useRef(null);
@@ -164,6 +165,11 @@ const QuestionPage = () => {
 
   const runCodeWithInput = async (code, input) => {
     return new Promise((resolve, reject) => {
+      if (typeof window === "undefined" || !window.Sk) {
+        reject(new Error("Skulpt is not loaded yet"));
+        return;
+      }
+
       let outputText = "";
       let inputIndex = 0;
       let inputLines = input.toString().split("\n");
@@ -222,6 +228,18 @@ const QuestionPage = () => {
   const handleRun = async () => {
     setIsLoading(true);
     setShowTestResults(true); // Show test results when running tests
+
+    if (!skulptLoaded) {
+      toast.error(
+        "Python interpreter is not loaded yet. Please wait a moment and try again.",
+        {
+          duration: 3000,
+          style: { backgroundColor: "#d32f2f", color: "white" },
+        }
+      );
+      setIsLoading(false);
+      return;
+    }
 
     // Create a copy of test cases to update
     const updatedTestResults = [...testResults];
@@ -295,23 +313,41 @@ const QuestionPage = () => {
     event.target.value = null;
   };
 
+  // Handle Skulpt loading
+  const handleSkulptLoad = () => {
+    if (window.Sk && window.Sk.misceval) {
+      setSkulptLoaded(true);
+    } else {
+      console.error("Failed to load Skulpt");
+    }
+  };
+
   useEffect(() => {
     if (localStorage.getItem(savedCode)) {
       setCode(localStorage?.getItem(savedCode) || initialCode);
     } else {
       setCode(initialCode);
     }
+
+    // Check if Skulpt is already loaded
+    if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
+      setSkulptLoaded(true);
+    }
   }, []);
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
       <Script
-        src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"
-        strategy="beforeInteractive"
+        src="/skulpt.min.js"
+        strategy="afterInteractive"
+        onLoad={() => console.log("Skulpt main loaded")}
+        onError={() => console.error("Failed to load Skulpt main")}
       />
       <Script
-        src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"
-        strategy="beforeInteractive"
+        src="/skulpt-stdlib.js"
+        strategy="afterInteractive"
+        onLoad={handleSkulptLoad}
+        onError={() => console.error("Failed to load Skulpt stdlib")}
       />
       <Navbar />
       <ResizablePanelGroup

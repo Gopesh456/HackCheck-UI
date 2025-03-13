@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+// import { post, get } from "@/utils/api";
 import { fetchData } from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -163,34 +164,25 @@ export default function Login() {
   async function login(formData) {
     try {
       console.log("button pressed");
-      setErrorMessage("");
-
-      const requestData = {
-        team_name: formData.username,
-        participant_name: formData.participant_name,
-        password: formData.password,
-      };
-
+      setErrorMessage(""); // Clear previous error messages
       const response = await fetchData(
-        "login/",
+        "admin_signin/",
         "POST",
-        requestData,
+        formData,
         false,
-        true
+        true,
       );
       Cookies.set("token", response.token, {
         secure: true,
         sameSite: "strict",
       });
-      router.push("/dashboard");
+      router.push("/admin/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       if (error.status === 400 || error.response?.status === 400) {
-        setErrorMessage("Login failed. Please try again after few minutes.");
+        setErrorMessage("Incorrect username or password");
       } else {
-        setErrorMessage(
-          error.response?.data?.error || "Login failed. Please try again."
-        );
+        setErrorMessage("Login failed. Please try again.");
       }
     }
   }
@@ -224,7 +216,7 @@ export default function Login() {
           ref={dotRef}
         ></div>
 
-        <div className="relative z-10 flex flex-col w-full max-w-[265px]  mx-auto bg-transparent rounded-3xl backdrop-blur-md sm:justify-center  md:flex-none xl:px-4">
+        <div className="relative z-10 flex flex-col w-full max-w-[275px] px-1 py-1 mx-auto bg-transparent rounded-3xl backdrop-blur-md sm:justify-center sm:py-2 md:flex-none md:px-2 lg:py-3 lg:px-3 xl:py-4 xl:px-4">
           <div className="w-full rounded-[50px] flex flex-col items-center justify-center h-full">
             <div className="mb-6 eyes-container">
               <div
@@ -271,16 +263,16 @@ export default function Login() {
             <p className="mb-6 text-center text-[#CBD5E0]">
               Welcome to{" "}
               <a href="#" className="text-[#CBD5E0]">
-                Bhavans Hackathon
+                Admin Portal
               </a>
             </p>
             <form onSubmit={handleSubmit(login)}>
               <div className="relative mb-4">
                 <input
-                  {...register("participant_name", { required: true })}
+                  {...register("username", { required: true })}
                   type="text"
-                  id="participant_name"
-                  placeholder="Participant Name"
+                  id="username"
+                  placeholder="Username"
                   className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
                 />
                 <span className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white">
@@ -296,33 +288,6 @@ export default function Login() {
                   </svg>
                 </span>
               </div>
-              <div className="relative mb-4">
-                <input
-                  {...register("username", { required: true })}
-                  type="text"
-                  id="username"
-                  placeholder="Team Name"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
-                />
-                <span className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white">
-                  <svg
-                    className="w-6 h-6"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12 6a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm-1.5 8a4 4 0 0 0-4 4 2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 4 4 0 0 0-4-4h-3Zm6.82-3.096a5.51 5.51 0 0 0-2.797-6.293 3.5 3.5 0 1 1 2.796 6.292ZM19.5 18h.5a2 2 0 0 0 2-2 4 4 0 0 0-4-4h-1.1a5.503 5.503 0 0 1-.471.762A5.998 5.998 0 0 1 19.5 18ZM4 7.5a3.5 3.5 0 0 1 5.477-2.889 5.5 5.5 0 0 0-2.796 6.293A3.501 3.501 0 0 1 4 7.5ZM7.1 12H6a4 4 0 0 0-4 4 2 2 0 0 0 2 2h.5a5.998 5.998 0 0 1 3.071-5.238A5.505 5.505 0 0 1 7.1 12Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </span>
-              </div>
-
               <div className="relative mb-6">
                 <input
                   {...register("password", { required: true })}

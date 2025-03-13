@@ -3,12 +3,27 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { fetchData } from "@/utils/api";
+import Cookies from "js-cookie";
 
 const Navbar = () => {
   // Countdown state
-  const [time, setTime] = useState(7200); // Set initial countdown time in seconds (e.g., 1 hour)
-
+  const [time, setTime] = useState(0); // Set initial countdown time in seconds (e.g., 1 hour)
+  async function getTime() {
+    try {
+      const response = await fetchData("get_time_left/", "POST", null);
+      if (response.time_left !== undefined) {
+        console.log("Time:", response.time_left);
+        setTime(response.time_left);
+      }
+    } catch (error) {
+      console.error("Error fetching time:", error);
+    }
+  }
+  useEffect(() => {
+    getTime();
+  }, []);
   // Update countdown every second
   useEffect(() => {
     const timer = setInterval(() => {
