@@ -19,6 +19,15 @@ export default function AdminDashboard() {
   const [nTeams, setnTeams] = useState("Loading...");
   const [nQuestions, setnQuestions] = useState("Loading...");
 
+  // State for system settings modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [scoreSettings, setScoreSettings] = useState({
+    max_score: 300,
+    score_decrement_interval_seconds: 600,
+    score_decrement_per_interval: 10,
+  });
+  const [maxParticipants, setMaxParticipants] = useState(4);
+
   // const token = Cookie.get("token") || null;
   const [timerRunning, setTimerRunning] = useState(false);
 
@@ -204,6 +213,82 @@ export default function AdminDashboard() {
     if (response.status === 200) {
       console.log("Results exported successfully");
     }
+  };
+
+  // Function to reset database
+  const handleResetDatabase = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to reset the database? This action cannot be undone."
+      )
+    ) {
+      try {
+        const response = await fetchData("reset_database/", "POST", null);
+        if (response.status === 200) {
+          alert("Database reset successfully");
+          // Refresh dashboard data
+          getDashboardData();
+        }
+      } catch (error) {
+        console.error("Error resetting database:", error);
+        alert("Failed to reset database");
+      }
+    }
+  };
+
+  // Function to load score settings
+  const loadScoreSettings = async () => {
+    try {
+      const response = await fetchData("get_score_settings/", "POST", null);
+      if (response) {
+        setScoreSettings({
+          max_score: response.max_score,
+          score_decrement_interval_seconds:
+            response.score_decrement_interval_seconds,
+          score_decrement_per_interval: response.score_decrement_per_interval,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading score settings:", error);
+    }
+  };
+
+  // Function to save score settings
+  const saveScoreSettings = async () => {
+    try {
+      const response = await fetchData(
+        "update_score_settings/",
+        "POST",
+        scoreSettings
+      );
+      if (response.status === 200) {
+        alert("Score settings updated successfully");
+      }
+    } catch (error) {
+      console.error("Error saving score settings:", error);
+      alert("Failed to update score settings");
+    }
+  };
+
+  // Function to save max participants
+  const saveMaxParticipants = async () => {
+    try {
+      const response = await fetchData("change_max_participants/", "POST", {
+        max_participants: maxParticipants,
+      });
+      if (response.status === 200) {
+        alert("Maximum participants updated successfully");
+      }
+    } catch (error) {
+      console.error("Error saving max participants:", error);
+      alert("Failed to update maximum participants");
+    }
+  };
+
+  // Open settings modal and load data
+  const openSettingsModal = () => {
+    loadScoreSettings();
+    setShowSettingsModal(true);
   };
 
   return (
@@ -396,7 +481,10 @@ export default function AdminDashboard() {
           >
             Export Results
           </button>
-          <button className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600">
+          <button
+            className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+            onClick={openSettingsModal}
+          >
             System Settings
           </button>
           <button className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600">
@@ -404,6 +492,144 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* System Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-2xl p-6 bg-gray-800 rounded-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">System Settings</h2>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="p-2 text-white bg-red-600 rounded-full hover:bg-red-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Database Reset Section */}
+            <div className="p-4 mb-6 bg-gray-700 rounded-lg">
+              <h3 className="mb-2 text-xl font-semibold">Reset Database</h3>
+              <p className="mb-4 text-gray-300">
+                This will reset the entire database. All teams, submissions, and
+                progress will be erased. This action cannot be undone.
+              </p>
+              <button
+                onClick={handleResetDatabase}
+                className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
+              >
+                Reset Database
+              </button>
+            </div>
+
+            {/* Score Settings Section */}
+            <div className="p-4 mb-6 bg-gray-700 rounded-lg">
+              <h3 className="mb-2 text-xl font-semibold">Score Settings</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-1 text-gray-300">
+                    Maximum Score
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={scoreSettings.max_score}
+                    onChange={(e) =>
+                      setScoreSettings({
+                        ...scoreSettings,
+                        max_score: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-gray-300">
+                    Decrement Interval (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={scoreSettings.score_decrement_interval_seconds}
+                    onChange={(e) =>
+                      setScoreSettings({
+                        ...scoreSettings,
+                        score_decrement_interval_seconds:
+                          parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-gray-300">
+                    Score Decrement Per Interval
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={scoreSettings.score_decrement_per_interval}
+                    onChange={(e) =>
+                      setScoreSettings({
+                        ...scoreSettings,
+                        score_decrement_per_interval:
+                          parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <button
+                  onClick={saveScoreSettings}
+                  className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+                >
+                  Save Score Settings
+                </button>
+              </div>
+            </div>
+
+            {/* Max Participants Section */}
+            <div className="p-4 bg-gray-700 rounded-lg">
+              <h3 className="mb-2 text-xl font-semibold">Max Team Size</h3>
+              <div className="flex items-end space-x-4">
+                <div className="flex-1">
+                  <label className="block mb-1 text-gray-300">
+                    Maximum Participants Per Team
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={maxParticipants}
+                    onChange={(e) =>
+                      setMaxParticipants(parseInt(e.target.value) || 1)
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <button
+                  onClick={saveMaxParticipants}
+                  className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
