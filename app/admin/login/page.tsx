@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-// import { post, get } from "@/utils/api";
 import { fetchData } from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { useLoading } from "@/contexts/LoadingContext";
 
 export default function Login() {
   const {
@@ -24,6 +24,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { setIsLoading: setGlobalLoading } = useLoading();
 
   // For cursor blob animation
   const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
@@ -170,6 +171,7 @@ export default function Login() {
 
     try {
       setIsLoading(true);
+      setGlobalLoading(true);
       setErrorMessage(""); // Clear previous error messages
 
       const response = await fetchData(
@@ -211,8 +213,16 @@ export default function Login() {
       }
     } finally {
       setIsLoading(false);
+      setGlobalLoading(false);
     }
   }
+
+  // When component unmounts during navigation, clear loading state
+  useEffect(() => {
+    return () => {
+      setGlobalLoading(false);
+    };
+  }, [setGlobalLoading]);
 
   return (
     <main className="relative">
