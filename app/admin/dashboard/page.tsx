@@ -199,6 +199,12 @@ export default function AdminDashboard() {
       }
     }
   };
+  const handleExportResults = async () => {
+    const response = await fetchData("export_leaderboard/", "POST", null);
+    if (response.status === 200) {
+      console.log("Results exported successfully");
+    }
+  };
 
   return (
     <div className="min-h-screen p-8 text-white bg-gray-900">
@@ -384,7 +390,10 @@ export default function AdminDashboard() {
       <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
         <h2 className="mb-4 text-xl font-semibold">Advanced Controls</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <button className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600">
+          <button
+            className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+            onClick={handleExportResults}
+          >
             Export Results
           </button>
           <button className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600">

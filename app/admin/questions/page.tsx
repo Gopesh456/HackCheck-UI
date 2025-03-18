@@ -56,16 +56,104 @@ export default function QuestionsManagementPage() {
     e.preventDefault();
 
     try {
-      // Validate form
+      if (formMode === "edit") {
+        await handleUpdateQuestion();
+      } else {
+        // Validate form
+        if (!newQuestion.title || !newQuestion.description) {
+          alert("Please fill in title and description");
+          return;
+        }
+
+        const postData = {
+          title: newQuestion.title,
+          description: newQuestion.description,
+          difficulty: newQuestion.difficulty,
+          samples: {
+            input: newQuestion.sampleInputs,
+            output: newQuestion.sampleOutputs,
+          },
+          tests: {
+            input: newQuestion.testInputs,
+            output: newQuestion.testOutputs,
+          },
+        };
+
+        await fetchData("add_question/", "POST", postData, false, false);
+
+        // Reload questions from API
+        await loadQuestions();
+
+        // Reset form
+        handleResetForm();
+
+        // Close form
+        setShowForm(false);
+      }
+    } catch (error) {
+      console.error("Error saving question:", error);
+      alert("Failed to save question");
+    }
+  };
+
+  // Edit a question - prepare form for editing
+  const handleEditQuestion = async (questionNumber: number) => {
+    try {
+      // Fetch complete question details
+      const response = await fetchData(
+        "get_question/",
+        "POST",
+        { question_number: questionNumber },
+        false,
+        false
+      );
+
+      if (response) {
+        // Populate form with fetched data
+        setNewQuestion({
+          id: response.question_id.toString(),
+          title: response.title,
+          description: response.description,
+          difficulty: response.difficulty || "easy",
+          sampleInputs: response.samples.input,
+          sampleOutputs: response.samples.output,
+          testInputs: response.tests.input,
+          testOutputs: response.tests.output,
+          createdAt: new Date().toISOString(),
+        });
+
+        setFormMode("edit");
+        setEditQuestionId(response.question_id.toString());
+        setShowForm(true);
+      }
+    } catch (error) {
+      console.error("Error fetching question details:", error);
+      alert("Failed to load question details");
+    }
+  };
+
+  // Handle updating an existing question
+  const handleUpdateQuestion = async () => {
+    try {
       if (!newQuestion.title || !newQuestion.description) {
         alert("Please fill in title and description");
         return;
       }
 
-      const postData = {
+      const questionNumber = apiQuestions.find(
+        (q) => q.question_id.toString() === editQuestionId
+      )?.question_number;
+
+      if (!questionNumber) {
+        alert("Question number not found");
+        return;
+      }
+
+      const updateData = {
+        question_number: questionNumber,
         title: newQuestion.title,
         description: newQuestion.description,
-        difficulty: newQuestion.difficulty, // Include difficulty in the request
+        difficulty: newQuestion.difficulty,
         samples: {
           input: newQuestion.sampleInputs,
           output: newQuestion.sampleOutputs,
@@ -76,9 +164,9 @@ export default function QuestionsManagementPage() {
         },
       };
 
-      await fetchData("add_question/", "POST", postData, false, false);
+      await fetchData("update_question/", "POST", updateData, false, false);
 
-      // Reload questions from API
+      // Reload questions after update
       await loadQuestions();
 
       // Reset form
@@ -87,34 +175,8 @@ export default function QuestionsManagementPage() {
       // Close form
       setShowForm(false);
     } catch (error) {
-      console.error("Error saving question:", error);
-      alert("Failed to save question");
-    }
-  };
-
-  // Edit a question - prepare form for editing
-  const handleEditQuestion = (questionNumber: number) => {
-    const questionToEdit = apiQuestions.find(
-      (q) => q.question_number === questionNumber
-    );
-    if (questionToEdit) {
-      // Since API questions don't contain all the fields needed for the form,
-      // we'll need to fetch the full question or prepare a default template
-      setNewQuestion({
-        id: questionToEdit.question_id.toString(),
-        title: questionToEdit.question,
-        description: "", // Would need to fetch from API
-        difficulty: "easy", // Default difficulty value
-        sampleInputs: ["", "", ""],
-        sampleOutputs: ["", "", ""],
-        testInputs: ["", "", "", ""],
-        testOutputs: ["", "", "", ""],
-        createdAt: new Date().toISOString(),
-      });
-
-      setFormMode("edit");
-      setEditQuestionId(questionToEdit.question_id.toString());
-      setShowForm(true);
+      console.error("Error updating question:", error);
+      alert("Failed to update question");
     }
   };
 
