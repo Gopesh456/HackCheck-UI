@@ -161,7 +161,7 @@ const QuestionPage = () => {
     for (const testCase of hiddenTestCases) {
       try {
         const output = await runCodeWithInput(userCode, testCase.input);
-        
+
         // Check if there was an error in the execution
         const hasError = output.startsWith("Error:");
         const isPassing =
@@ -183,20 +183,64 @@ const QuestionPage = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     localStorage.setItem(savedCode, code);
-    
-    // Run hidden tests
-    const passed = await runHiddenTests(code);
-    // await fetchData("submit/", "POST", {code: code, question_number: params.qid, is_correct_answer: passed,tests:});
-    setAllHiddenTestsPassed(passed);
 
+    // Run hidden tests and collect results
+    let allPassed = true;
+    const testResultsObj = {};
+
+    for (let i = 0; i < hiddenTestCases.length; i++) {
+      const testCase = hiddenTestCases[i];
+      try {
+        const output = await runCodeWithInput(code, testCase.input);
+
+        // Check if there was an error in the execution
+        const hasError = output.startsWith("Error:");
+        const isPassing =
+          !hasError && output.trim() === testCase.expectedOutput.trim();
+
+        testResultsObj[`test_${i + 1}`] = {
+          input: testCase.input,
+          expected: testCase.expectedOutput,
+          actual: output,
+          passed: isPassing,
+        };
+
+        if (!isPassing) {
+          allPassed = false;
+        }
+      } catch (error) {
+        testResultsObj[`test_${i + 1}`] = {
+          input: testCase.input,
+          expected: testCase.expectedOutput,
+          actual: `Error: ${error.message}`,
+          passed: false,
+        };
+        allPassed = false;
+      }
+    }
+
+    // Send results to server
+    try {
+      await fetchData("submit/", "POST", {
+        code: code,
+        question_number: params.qid,
+        is_correct_answer: allPassed,
+        tests: testResultsObj,
+      });
+    } catch (error) {
+      console.error("Error submitting code:", error);
+      toast.error("Error submitting code to server");
+    }
+
+    setAllHiddenTestsPassed(allPassed);
     setIsSubmitting(false);
 
     toast.success("Code submitted successfully!", {
       style: {
-        backgroundColor: passed ? "#088255" : "#d32f2f",
+        backgroundColor: allPassed ? "#088255" : "#d32f2f",
         color: "white",
       },
-      description: passed
+      description: allPassed
         ? "All tests passed!"
         : "Some tests failed. Try again!!",
     });

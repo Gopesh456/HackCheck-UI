@@ -16,6 +16,7 @@ export default function QuestionsManagementPage() {
     id: "",
     title: "",
     description: "",
+    difficulty: "easy", // Default difficulty value
     sampleInputs: ["", "", ""],
     sampleOutputs: ["", "", ""],
     testInputs: ["", "", "", ""],
@@ -64,6 +65,7 @@ export default function QuestionsManagementPage() {
       const postData = {
         title: newQuestion.title,
         description: newQuestion.description,
+        difficulty: newQuestion.difficulty, // Include difficulty in the request
         samples: {
           input: newQuestion.sampleInputs,
           output: newQuestion.sampleOutputs,
@@ -102,6 +104,7 @@ export default function QuestionsManagementPage() {
         id: questionToEdit.question_id.toString(),
         title: questionToEdit.question,
         description: "", // Would need to fetch from API
+        difficulty: "easy", // Default difficulty value
         sampleInputs: ["", "", ""],
         sampleOutputs: ["", "", ""],
         testInputs: ["", "", "", ""],
@@ -136,7 +139,9 @@ export default function QuestionsManagementPage() {
 
   // Handle form input changes
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setNewQuestion((prev) => ({
@@ -176,6 +181,7 @@ export default function QuestionsManagementPage() {
       id: "",
       title: "",
       description: "",
+      difficulty: "easy", // Reset to default difficulty
       sampleInputs: ["", "", ""],
       sampleOutputs: ["", "", ""],
       testInputs: ["", "", "", ""],
@@ -268,6 +274,23 @@ export default function QuestionsManagementPage() {
                 required
                 rows={4}
               />
+            </div>
+
+            {/* Difficulty Dropdown */}
+            <div className="form-group">
+              <label htmlFor="difficulty">Difficulty:</label>
+              <select
+                id="difficulty"
+                name="difficulty"
+                value={newQuestion.difficulty}
+                className="text-white bg-[#121418]"
+                onChange={handleInputChange}
+                required
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
             </div>
 
             {/* Sample Test Cases */}
@@ -364,6 +387,7 @@ interface Question {
   id: string;
   title: string;
   description: string;
+  difficulty: "easy" | "medium" | "hard"; // Add the difficulty property
   sampleInputs: string[];
   sampleOutputs: string[];
   testInputs: string[];
