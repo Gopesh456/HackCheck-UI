@@ -10,20 +10,24 @@ A web application for participating in and managing hackathon challenges.
 - [Running the Application](#running-the-application)
 - [Building for Production](#building-for-production)
 - [Troubleshooting](#troubleshooting)
+- [Pages and Functionality](#pages-and-functionality)
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed on your computer:
 
 1. **Node.js** (version 18 or higher)
+
    - Download and install from [nodejs.org](https://nodejs.org/)
    - Verify installation by running `node -v` in your terminal/command prompt
 
 2. **npm** (comes with Node.js) or **yarn**
+
    - Verify npm installation: `npm -v`
    - If you prefer yarn: Install with `npm install -g yarn` and verify with `yarn -v`
 
 3. **Git** (for cloning the repository)
+
    - Download and install from [git-scm.com](https://git-scm.com/)
    - Verify installation: `git --version`
 
@@ -67,7 +71,6 @@ If the project requires environment variables:
    ```bash
    cp .env.example .env.local
    ```
-   
 2. Open `.env.local` in your code editor and fill in the required values.
 
 ## Project Structure
@@ -78,6 +81,11 @@ Next.js follows a file-based routing system. Here's a quick overview:
   - `(student)/` - Student-related routes in a route group
     - `dashboard/` - Dashboard page
     - `question/` - Question pages
+  - `admin/` - Admin-related routes
+    - `dashboard/` - Admin dashboard page
+    - `questions/` - Manage questions page
+    - `teams/` - Manage teams page
+    - `leaderboard/` - View leaderboard page
 - `components/` - Reusable UI components
 - `utils/` - Utility functions and helpers
 - `public/` - Static files like images
@@ -115,10 +123,13 @@ Open this URL in your browser to see the application.
 When you're ready to deploy your application:
 
 1. Build the production version:
+
    ```bash
    npm run build
    ```
+
    OR
+
    ```bash
    yarn build
    ```
@@ -139,6 +150,7 @@ The production version will be optimized for better performance.
 ### Common Issues
 
 1. **Port already in use**
+
    - Error: `Error: listen EADDRINUSE: address already in use :::3000`
    - Solution: Either close the application using port 3000 or change the port:
      ```bash
@@ -146,6 +158,7 @@ The production version will be optimized for better performance.
      ```
 
 2. **Missing dependencies**
+
    - Error: Cannot find module 'module-name'
    - Solution: Install the missing dependency:
      ```bash
@@ -159,6 +172,7 @@ The production version will be optimized for better performance.
 ### Still Having Problems?
 
 1. Try deleting the `.next` folder and `node_modules` folder, then reinstall dependencies:
+
    ```bash
    rm -rf .next node_modules
    npm install
@@ -169,6 +183,57 @@ The production version will be optimized for better performance.
 3. Check for typos in your code or configuration files
 
 4. Look for error messages in your terminal/console for more specific information
+
+## Pages and Functionality
+
+### Student Pages
+
+- **Dashboard (`/student/dashboard`)**
+
+  - Displays a list of hackathon questions.
+  - Each question shows its title, difficulty, score, and status.
+  - Clicking "Solve Challenge" navigates to the question page with a loading indicator.
+
+- **Question (`/student/question/[qid]`)**
+
+  - Displays the details of a specific question.
+  - Allows students to write and run code against test cases.
+  - Provides functionality to save, reset, and submit code.
+
+- **Login (`/student/login`)**
+  - Allows students to log in to their accounts.
+  - Requires team name, participant name, and password.
+
+### Admin Pages
+
+- **Dashboard (`/admin/dashboard`)**
+
+  - Provides an overview of the hackathon platform.
+  - Includes sections for managing teams, viewing logs, and system settings.
+
+- **Questions Management (`/admin/questions`)**
+
+  - Allows admins to add, edit, and delete questions.
+  - Provides fields for question title, description, difficulty, and test cases.
+
+- **Teams Management (`/admin/teams`)**
+
+  - Allows admins to manage participating teams.
+  - Includes functionality to add, edit, and delete teams.
+
+- **Leaderboard (`/admin/leaderboard`)**
+  - Displays the leaderboard with team rankings based on points.
+  - Shows team names, points, and members.
+
+### Common Components
+
+- **Navbar**
+
+  - A navigation bar that appears on all pages.
+  - Includes links to different sections of the application.
+
+- **Loader**
+  - A loading indicator component used to show loading states.
 
 ## Learn More
 
