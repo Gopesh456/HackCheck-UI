@@ -71,7 +71,6 @@ export default function LeaderboardPage() {
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fetchingData, setFetchingData] = useState(false);
   const previousTeamsRef = useRef<Map<number, Team>>(new Map());
   const initialLoadCompleted = useRef(false);
 
@@ -82,9 +81,6 @@ export default function LeaderboardPage() {
         // Set loading state only on initial load
         if (!initialLoadCompleted.current) {
           setLoading(true);
-        } else {
-          // Use a more subtle loading indicator for subsequent fetches
-          setFetchingData(true);
         }
 
         const response = await fetchData("get_points/", "POST", null);
@@ -138,7 +134,6 @@ export default function LeaderboardPage() {
         }
       } finally {
         setLoading(false);
-        setFetchingData(false);
       }
     };
 
@@ -237,22 +232,6 @@ export default function LeaderboardPage() {
             <Star className="w-6 h-6 text-amber-400" />
           </div>
           <p className="text-lg text-zinc-500">Excellence in Innovation</p>
-
-          {/* Subtle updating indicator */}
-          <AnimatePresence>
-            {fetchingData && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center justify-center gap-2 mt-2 text-xs text-zinc-500"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400/70 animate-pulse"></div>
-                <span className="opacity-70">Refreshing...</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
 
         {loading ? (
