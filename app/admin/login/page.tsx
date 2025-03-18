@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-// import { post, get } from "@/utils/api";
 import { fetchData } from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { useLoading } from "@/contexts/LoadingContext";
 
 export default function Login() {
   const {
@@ -23,6 +23,8 @@ export default function Login() {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { setIsLoading: setGlobalLoading } = useLoading();
 
   // For cursor blob animation
   const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
@@ -162,30 +164,65 @@ export default function Login() {
   const router = useRouter();
 
   async function login(formData) {
+    if (!formData.username || !formData.password) {
+      setErrorMessage("Username and password are required");
+      return;
+    }
+
     try {
-      console.log("button pressed");
+      setIsLoading(true);
+      setGlobalLoading(true);
       setErrorMessage(""); // Clear previous error messages
+
       const response = await fetchData(
         "admin_signin/",
         "POST",
         formData,
         false,
-        true,
+        true
       );
-      Cookies.set("token", response.token, {
-        secure: true,
-        sameSite: "strict",
-      });
-      router.push("/admin/dashboard");
+
+      if (response.token) {
+        Cookies.set("token", response.token, {
+          secure: true,
+          sameSite: "strict",
+          expires: 7, // Token expires in 7 days
+        });
+        router.push("/admin/dashboard");
+      } else {
+        setErrorMessage(response.error);
+      }
     } catch (error) {
       console.error("Login failed:", error);
-      if (error.status === 400 || error.response?.status === 400) {
-        setErrorMessage("Incorrect username or password");
+
+      if (error.response?.data?.message) {
+        // Use server-provided error message if available
+        setErrorMessage(error.response.data.message);
+      } else if (error.status === 401 || error.response?.status === 401) {
+        setErrorMessage("Invalid credentials. Please check and try again.");
+      } else if (error.status === 400 || error.response?.status === 400) {
+        setErrorMessage("Invalid login details. Please check and try again.");
+      } else if (error.status === 429 || error.response?.status === 429) {
+        setErrorMessage("Too many login attempts. Please try again later.");
+      } else if (!navigator.onLine) {
+        setErrorMessage(
+          "Network error. Please check your internet connection."
+        );
       } else {
-        setErrorMessage("Login failed. Please try again.");
+        setErrorMessage("Login failed. Please try again later.");
       }
+    } finally {
+      setIsLoading(false);
+      setGlobalLoading(false);
     }
   }
+
+  // When component unmounts during navigation, clear loading state
+  useEffect(() => {
+    return () => {
+      setGlobalLoading(false);
+    };
+  }, [setGlobalLoading]);
 
   return (
     <main className="relative">
@@ -266,14 +303,18 @@ export default function Login() {
                 Admin Portal
               </a>
             </p>
-            <form onSubmit={handleSubmit(login)}>
+            <form onSubmit={handleSubmit(login)} noValidate>
               <div className="relative mb-4">
                 <input
-                  {...register("username", { required: true })}
+                  {...register("username", {
+                    required: "Username is required",
+                  })}
                   type="text"
                   id="username"
                   placeholder="Username"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
+                  className={`w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none ${
+                    errors.username ? "border-red-500" : ""
+                  }`}
                 />
                 <span className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white">
                   <svg
@@ -287,14 +328,23 @@ export default function Login() {
                     <path d="M7.5 6.5C7.5 8.981 9.519 11 12 11s4.5-2.019 4.5-4.5S14.481 2 12 2 7.5 4.019 7.5 6.5zM20 21h1v-1c0-3.859-3.141-7-7-7h-4c-3.86 0-7 3.141-7 7v1h17z"></path>
                   </svg>
                 </span>
+                {errors.username && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.username.message}
+                  </p>
+                )}
               </div>
               <div className="relative mb-6">
                 <input
-                  {...register("password", { required: true })}
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Password"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
+                  className={`w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none ${
+                    errors.password ? "border-red-500" : ""
+                  }`}
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                 />
@@ -332,19 +382,53 @@ export default function Login() {
                     </svg>
                   )}
                 </button>
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {errorMessage && (
-                <div className="mb-4 text-sm text-center text-red-500">
+                <div className="p-2 mb-4 text-sm text-center text-red-500 bg-red-100 rounded bg-opacity-20">
                   {errorMessage}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-2 font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                disabled={isLoading}
+                className={`w-full py-2 font-semibold text-gray-900 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
+                  isLoading
+                    ? "opacity-75 cursor-not-allowed"
+                    : "hover:bg-gray-200"
+                }`}
               >
-                Enter
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 mr-2 animate-spin"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  "Enter"
+                )}
               </button>
             </form>
           </div>

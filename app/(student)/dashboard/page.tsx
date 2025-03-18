@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 
 import Navbar from "@/components/navbar"; // Import the Navbar component
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import router for navigation
 import { fetchData } from "@/utils/api";
 // import AcmeLogo from "../components/AcmeLogo";
 
@@ -24,12 +25,24 @@ interface FormattedQuestion {
   difficulty: string; // This would need to be derived or fetched separately
   Score: number;
   Status: string;
+  number: number; // Added number property to match what's used in the code
 }
 
 const Dashboard = () => {
+  const router = useRouter(); // Initialize router
   const [questions, setQuestions] = useState<FormattedQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingQuestion, setLoadingQuestion] = useState<number | null>(null); // Track which question is loading
   const [error, setError] = useState<string | null>(null);
+
+  // Handle solve challenge button click
+  const handleSolveChallenge = (questionNumber: number) => {
+    setLoadingQuestion(questionNumber); // Set this question as loading
+    // Navigate after a brief delay to show loading state
+    setTimeout(() => {
+      router.push(`/question/${questionNumber}`);
+    }, 300);
+  };
 
   // Fetch questions on component mount
   useEffect(() => {
@@ -155,11 +168,39 @@ const Dashboard = () => {
                     </span>
                   </span>
                 </div>
-                <Link href={`/question/${question.number}`}>
-                  <button className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
-                    Solve Challenge
-                  </button>
-                </Link>
+                <button
+                  onClick={() => handleSolveChallenge(question.number)}
+                  disabled={loadingQuestion === question.number}
+                  className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800 disabled:opacity-70"
+                >
+                  {loadingQuestion === question.number ? (
+                    <div className="flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-2 -ml-1 text-white animate-spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Loading...
+                    </div>
+                  ) : (
+                    "Solve Challenge"
+                  )}
+                </button>
               </div>
             ))
           )}

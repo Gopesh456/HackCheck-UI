@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookie from "js-cookie";
 import { fetchData } from "@/utils/api";
-// import { send } from "process";
+import { useLoading } from "@/contexts/LoadingContext";
+import { useNavigationWithLoading } from "@/utils/navigation";
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { setIsLoading } = useLoading();
+  const { navigateTo } = useNavigationWithLoading();
   const [websiteActive, setWebsiteActive] = useState();
   const [timer, setTimer] = useState({ hours: 1, minutes: 0 });
   const [remainingTime, setRemainingTime] = useState({
@@ -112,6 +115,29 @@ export default function AdminDashboard() {
       console.error("Error fetching dashboard data:", error);
     }
   }
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    // Simulate data loading
+    const loadData = async () => {
+      try {
+        // Your data fetching logic here
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+
+    // Cleanup function to ensure loading state is reset if component unmounts during loading
+    return () => {
+      setIsLoading(false);
+    };
+  }, [setIsLoading]);
 
   useEffect(() => {
     getDashboardData();
@@ -403,7 +429,7 @@ export default function AdminDashboard() {
             Add, remove, or modify participating teams.
           </p>
           <button
-            onClick={() => router.push("/admin/teams")}
+            onClick={() => navigateTo("/admin/teams")}
             className="flex items-center justify-center w-full py-3 transition-colors bg-indigo-600 rounded-md hover:bg-indigo-700"
           >
             <span className="mr-2">
@@ -426,7 +452,7 @@ export default function AdminDashboard() {
             Create, edit, or delete questions for the hackathon.
           </p>
           <button
-            onClick={() => router.push("/admin/questions")}
+            onClick={() => navigateTo("/admin/questions")}
             className="flex items-center justify-center w-full py-3 transition-colors bg-purple-600 rounded-md hover:bg-purple-700"
           >
             <span className="mr-2">
@@ -453,7 +479,7 @@ export default function AdminDashboard() {
             View real-time rankings and participant scores.
           </p>
           <button
-            onClick={() => router.push("/admin/leaderboard")}
+            onClick={() => navigateTo("/admin/leaderboard")}
             className="flex items-center justify-center w-full py-3 transition-colors bg-green-600 rounded-md hover:bg-green-700"
           >
             <span className="mr-2">

@@ -22,6 +22,7 @@ export default function Login() {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // For cursor blob animation
   const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
@@ -162,8 +163,19 @@ export default function Login() {
 
   async function login(formData) {
     try {
-      console.log("button pressed");
+      setIsLoading(true);
       setErrorMessage("");
+
+      // Validate required fields
+      if (
+        !formData.username ||
+        !formData.participant_name ||
+        !formData.password
+      ) {
+        setErrorMessage("All fields are required");
+        setIsLoading(false);
+        return;
+      }
 
       const requestData = {
         team_name: formData.username,
@@ -178,20 +190,24 @@ export default function Login() {
         false,
         true
       );
+
+      // Successful login
       Cookies.set("token", response.token, {
         secure: true,
         sameSite: "strict",
+        expires: 1, // expires in 1 day
       });
-      router.push("/dashboard");
+      if (response.error) {
+        setErrorMessage(response.error);
+        setIsLoading(false);
+        return;
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Login failed:", error);
-      if (error.status === 400 || error.response?.status === 400) {
-        setErrorMessage("Login failed. Please try again after few minutes.");
-      } else {
-        setErrorMessage(
-          error.response?.data?.error || "Login failed. Please try again."
-        );
-      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -277,12 +293,21 @@ export default function Login() {
             <form onSubmit={handleSubmit(login)}>
               <div className="relative mb-4">
                 <input
-                  {...register("participant_name", { required: true })}
+                  {...register("participant_name", {
+                    required: "Participant name is required",
+                  })}
                   type="text"
                   id="participant_name"
                   placeholder="Participant Name"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
+                  className={`w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none ${
+                    errors.participant_name ? "border-red-500" : ""
+                  }`}
                 />
+                {errors.participant_name && (
+                  <span className="mt-1 text-xs text-red-500">
+                    {errors.participant_name.message}
+                  </span>
+                )}
                 <span className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -298,12 +323,21 @@ export default function Login() {
               </div>
               <div className="relative mb-4">
                 <input
-                  {...register("username", { required: true })}
+                  {...register("username", {
+                    required: "Team name is required",
+                  })}
                   type="text"
                   id="username"
                   placeholder="Team Name"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
+                  className={`w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-b-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none ${
+                    errors.username ? "border-red-500" : ""
+                  }`}
                 />
+                {errors.username && (
+                  <span className="mt-1 text-xs text-red-500">
+                    {errors.username.message}
+                  </span>
+                )}
                 <span className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white">
                   <svg
                     className="w-6 h-6"
@@ -325,14 +359,27 @@ export default function Login() {
 
               <div className="relative mb-6">
                 <input
-                  {...register("password", { required: true })}
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 4,
+                      message: "Password must be at least 4 characters",
+                    },
+                  })}
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Password"
-                  className="w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none"
+                  className={`w-full px-3 py-2 border-b-2 text-[#FFFFFF] p-3 transition-all duration-300 ease-in-out bg-[rgba(255, 255, 255, 0.1)] border-[#4A5568] focus:text-[#dcebf7] focus:bg-[rgba(255, 255, 255, 0.15)] focus:border-b-0 focus:outline-none focus:rounded-lg cursor-none ${
+                    errors.password ? "border-red-500" : ""
+                  }`}
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                 />
+                {errors.password && (
+                  <span className="mt-1 text-xs text-red-500">
+                    {errors.password.message}
+                  </span>
+                )}
                 <button
                   type="button"
                   className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white"
@@ -341,7 +388,7 @@ export default function Login() {
                   {showPassword ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
+                      className="w-5 h-8"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -370,16 +417,45 @@ export default function Login() {
               </div>
 
               {errorMessage && (
-                <div className="mb-4 text-sm text-center text-red-500">
+                <div className="p-2 mb-4 text-sm font-medium text-center text-red-800 bg-red-100 border border-red-300 rounded-lg">
                   {errorMessage}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-2 font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                disabled={isLoading}
+                className={`w-full py-2 font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all duration-300 ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                Enter
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 mr-2 -ml-1 text-gray-900 animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </div>
+                ) : (
+                  "Enter"
+                )}
               </button>
             </form>
           </div>
