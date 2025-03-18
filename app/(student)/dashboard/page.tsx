@@ -14,6 +14,7 @@ interface Question {
   question_id: number;
   status: string;
   score: number;
+  difficulty: string;
 }
 
 // Type definition for the transformed question to match our UI
@@ -59,7 +60,7 @@ const Dashboard = () => {
           return {
             number: q.question_number,
             title: q.question,
-            difficulty: getDifficultyLevel(q.question_number),
+            difficulty: formatDifficulty(q.difficulty),
             Score: q.score,
             Status: formatStatus(q.status),
           };
@@ -81,17 +82,18 @@ const Dashboard = () => {
   }, []);
 
   // Helper function to determine difficulty level (you may need to adjust this logic)
-  const getDifficultyLevel = (questionNumber: number): string => {
-    // This is a placeholder logic - replace with actual logic based on your requirements
-    if (questionNumber % 3 === 0) return "Expert";
-    if (questionNumber % 2 === 0) return "Medium";
-    return "Easy";
+  const formatDifficulty = (difficulty: string): string => {
+    if (difficulty === "easy") return "Easy";
+    if (difficulty === "medium") return "Medium";
+    if (difficulty === "hard") return "Expert";
+    return difficulty; // Return as is if it's neither
   };
 
   // Helper function to format status for display
   const formatStatus = (status: string): string => {
-    if (status === "NOT_ANSWERED") return "Incomplete";
-    if (status === "ANSWERED") return "Complete";
+    if (status === "NOT_ANSWERED") return "Pending";
+    if (status === "CORRECT") return "Correct";
+    if (status === "INCORRECT") return "Incorrect";
     return status; // Return as is if it's neither
   };
 
@@ -106,11 +108,11 @@ const Dashboard = () => {
           <br />
 
           {loading ? (
-            <div className="text-center py-10">Loading questions...</div>
+            <div className="py-10 text-center">Loading questions...</div>
           ) : error ? (
-            <div className="text-center py-10 text-red-500">{error}</div>
+            <div className="py-10 text-center text-red-500">{error}</div>
           ) : questions.length === 0 ? (
-            <div className="text-center py-10">No questions available.</div>
+            <div className="py-10 text-center">No questions available.</div>
           ) : (
             questions.map((question, index) => (
               <div
@@ -136,7 +138,21 @@ const Dashboard = () => {
                   </span>
                   <span className="mt-2 text-sm ">
                     <span> Score: {question.Score}</span>
-                    <span className="ml-4">Status: {question.Status}</span>
+                    <span className="ml-4">Status:</span>
+                    <span
+                      className={`mt-2 text-sm ${
+                        question.Status.toLowerCase() === "correct"
+                          ? "text-[#23D05E]"
+                          : question.Status.toLowerCase() === "incorrect"
+                          ? "text-[#D05537]"
+                          : question.Status.toLowerCase() === "pending"
+                          ? "text-white"
+                          : ""
+                      } `}
+                    >
+                      {" "}
+                      {question.Status}
+                    </span>
                   </span>
                 </div>
                 <Link href={`/question/${question.number}`}>
