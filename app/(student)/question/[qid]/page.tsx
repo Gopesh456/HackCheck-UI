@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import { fetchData } from "@/utils/api";
 import Navbar from "@/components/navbar";
 import dynamic from "next/dynamic";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
@@ -31,67 +32,26 @@ const QuestionPage = () => {
     },
   });
 
-  const problem = {
-    question:
-      "# Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print(input())`   Correlation and Regression Lines - A Quick Recap #1\n\nIn this **problem**, 1. you'll analyze the relationship between variables using statistical methods.\n\n## Instructions:\n- Calculate the correlation coefficient\n- Find the regression line equation\n- Make predictions using your mode \n `print('hello')`  ",
-  };
+  const params = useParams();
+  const [questionData, setQuestionData] = useState({
+    title: "",
+    description: "",
+    samples: { input: [], output: [] },
+    tests: { input: [], output: [] },
+  });
+  const [loading, setLoading] = useState(true);
 
   // Initial Python code template
   const initialCode = `# Write your Python code here\n`;
 
-  // Define test cases
-  const testCases = [
-    {
-      id: 1,
-      input: "10",
-      expectedOutput: "10",
-      actualOutput: "",
-      status: null, // will be "pass" or "fail"
-    },
-    {
-      id: 2,
-      input: "5",
-      expectedOutput: "5",
-      actualOutput: "",
-      status: null,
-    },
-    {
-      id: 3,
-      input: "Hello",
-      expectedOutput: "Hello",
-      actualOutput: "",
-      status: null,
-    },
-  ];
-
-  // Define hidden test cases for submission evaluation
-  const hiddenTestCases = [
-    {
-      id: 1,
-      input: "20",
-      expectedOutput: "20",
-    },
-    {
-      id: 2,
-      input: "Hello World",
-      expectedOutput: "Hello World",
-    },
-    {
-      id: 3,
-      input: "3.14",
-      expectedOutput: "3.14",
-    },
-    {
-      id: 4,
-      input: "True",
-      expectedOutput: "True",
-    },
-  ];
+  // Test cases will be generated from the question data
+  const [testCases, setTestCases] = useState([]);
+  const [hiddenTestCases, setHiddenTestCases] = useState([]);
 
   const [fullscreen, setFullscreen] = useState(false);
   const [code, setCode] = useState(initialCode);
   const [key, setKey] = useState(0);
-  const [testResults, setTestResults] = useState([...testCases]);
+  const [testResults, setTestResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showTestResults, setShowTestResults] = useState(false);
   const [allHiddenTestsPassed, setAllHiddenTestsPassed] = useState(false);
@@ -101,13 +61,94 @@ const QuestionPage = () => {
   // Reference to file input element
   const fileInputRef = useRef(null);
 
+  // Fetch question data
+  const fetchQuestionData = async () => {
+    try {
+      setLoading(true);
+      // Use the question ID from the URL params
+      const questionId = params.qid;
+
+      // Make the API request to get the question
+      const response = await fetchData("get_question/", "POST", {
+        question_number: questionId,
+      });
+
+      // Check if response is already parsed JSON
+      let data;
+      if (typeof response === "object" && !response.json) {
+        // Response is already parsed JSON
+        data = response;
+      } else if (response && typeof response.json === "function") {
+        // Response is a proper Response object
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch question data: ${response.status} ${response.statusText}`
+          );
+        }
+        data = await response.json();
+      } else {
+        throw new Error("Invalid response format from API");
+      }
+
+      if (data.length === 0) {
+        throw new Error("Question data is empty or invalid format");
+      }
+
+      // Set the question data
+      const question = data;
+      setQuestionData(question);
+
+      // Create test cases from the samples
+      if (
+        question.samples &&
+        Array.isArray(question.samples.input) &&
+        Array.isArray(question.samples.output)
+      ) {
+        const newTestCases = question.samples.input.map((input, index) => ({
+          id: index + 1,
+          input: input,
+          expectedOutput: question.samples.output[index] || "",
+          actualOutput: "",
+          status: null, // will be "pass" or "fail"
+        }));
+
+        setTestCases(newTestCases);
+        setTestResults(newTestCases);
+      } else {
+        throw new Error("Sample test cases missing or in wrong format");
+      }
+
+      // Create hidden test cases from the tests
+      if (
+        question.tests &&
+        Array.isArray(question.tests.input) &&
+        Array.isArray(question.tests.output)
+      ) {
+        const newHiddenTestCases = question.tests.input.map((input, index) => ({
+          id: index + 1,
+          input: input,
+          expectedOutput: question.tests.output[index] || "",
+        }));
+
+        setHiddenTestCases(newHiddenTestCases);
+      } else {
+        throw new Error("Hidden test cases missing or in wrong format");
+      }
+    } catch (error) {
+      console.error("Error fetching question:", error);
+      toast.error(`Failed to load question data: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReset = () => {
     setCode(initialCode);
     setKey((prevKey) => prevKey + 1);
     setTestResults([...testCases]); // Reset test results
   };
 
-  const savedCode = "savedCode" + useParams().qid;
+  const savedCode = "savedCode" + params.qid;
   const handleSave = () => {
     localStorage.setItem(savedCode, code);
     toast.success("Code saved successfully!", {});
@@ -120,7 +161,7 @@ const QuestionPage = () => {
     for (const testCase of hiddenTestCases) {
       try {
         const output = await runCodeWithInput(userCode, testCase.input);
-
+        
         // Check if there was an error in the execution
         const hasError = output.startsWith("Error:");
         const isPassing =
@@ -142,13 +183,11 @@ const QuestionPage = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     localStorage.setItem(savedCode, code);
-
+    
     // Run hidden tests
     const passed = await runHiddenTests(code);
+    // await fetchData("submit/", "POST", {code: code, question_number: params.qid, is_correct_answer: passed,tests:});
     setAllHiddenTestsPassed(passed);
-
-    // You can later send this value to your backend
-    console.log("All hidden tests passed:", passed);
 
     setIsSubmitting(false);
 
@@ -323,6 +362,9 @@ const QuestionPage = () => {
   };
 
   useEffect(() => {
+    // Fetch question data when component mounts
+    fetchQuestionData();
+
     if (localStorage.getItem(savedCode)) {
       setCode(localStorage?.getItem(savedCode) || initialCode);
     } else {
@@ -333,16 +375,11 @@ const QuestionPage = () => {
     if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
       setSkulptLoaded(true);
     }
-  }, []);
+  }, [params.qid]);
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
-      <Script
-        src="/skulpt.min.js"
-        strategy="afterInteractive"
-        onLoad={() => console.log("Skulpt main loaded")}
-        onError={() => console.error("Failed to load Skulpt main")}
-      />
+      <Script src="/skulpt.min.js" strategy="afterInteractive" />
       <Script
         src="/skulpt-stdlib.js"
         strategy="afterInteractive"
@@ -361,54 +398,62 @@ const QuestionPage = () => {
           className={`${fullscreen ? "hidden" : ""}`}
         >
           <div className="h-[90vh] p-6 prose prose-invert max-w-none overflow-y-auto">
-            <ReactMarkdown
-              components={{
-                code: ({ node, inline, className, children, ...props }) => {
-                  return inline ? (
-                    <code
-                      className="rounded bg-zinc-700 px-1.5 py-0.5 text-sm font-mono text-zinc-200 w-[200px]"
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-xl">Loading question...</div>
+              </div>
+            ) : (
+              <ReactMarkdown
+                components={{
+                  code: ({ node, inline, className, children, ...props }) => {
+                    return inline ? (
+                      <code
+                        className="rounded bg-zinc-700 px-1.5 py-0.5 text-sm font-mono text-zinc-200 w-[200px]"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    ) : (
+                      <code
+                        className="block w-full p-4 my-3 overflow-x-auto font-mono rounded-md bg-zinc-800 text-zinc-200"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
+                  blockquote: ({ node, ...props }) => (
+                    <blockquote
+                      className="p-2 pl-4 my-3 italic border-l-4 border-zinc-500 bg-zinc-900 rounded-r-md"
                       {...props}
-                    >
-                      {children}
-                    </code>
-                  ) : (
-                    <code
-                      className="block w-full p-4 my-3 overflow-x-auto font-mono rounded-md bg-zinc-800 text-zinc-200"
+                    />
+                  ),
+                  h1: ({ node, ...props }) => (
+                    <h1
+                      className="mb-4 text-2xl font-bold text-white"
                       {...props}
-                    >
-                      {children}
-                    </code>
-                  );
-                },
-                blockquote: ({ node, ...props }) => (
-                  <blockquote
-                    className="p-2 pl-4 my-3 italic border-l-4 border-zinc-500 bg-zinc-900 rounded-r-md"
-                    {...props}
-                  />
-                ),
-                h1: ({ node, ...props }) => (
-                  <h1
-                    className="mb-4 text-2xl font-bold text-white"
-                    {...props}
-                  />
-                ),
-                h2: ({ node, ...props }) => (
-                  <h2
-                    className="my-3 text-xl font-bold text-white"
-                    {...props}
-                  />
-                ),
-                ul: ({ node, ...props }) => (
-                  <ul className="ml-6 list-disc" {...props} />
-                ),
-                li: ({ node, ...props }) => <li className="my-1" {...props} />,
-                strong: ({ node, ...props }) => (
-                  <strong className="font-bold " {...props} />
-                ),
-              }}
-            >
-              {problem.question}
-            </ReactMarkdown>
+                    />
+                  ),
+                  h2: ({ node, ...props }) => (
+                    <h2
+                      className="my-3 text-xl font-bold text-white"
+                      {...props}
+                    />
+                  ),
+                  ul: ({ node, ...props }) => (
+                    <ul className="ml-6 list-disc" {...props} />
+                  ),
+                  li: ({ node, ...props }) => (
+                    <li className="my-1" {...props} />
+                  ),
+                  strong: ({ node, ...props }) => (
+                    <strong className="font-bold " {...props} />
+                  ),
+                }}
+              >
+                {questionData.description}
+              </ReactMarkdown>
+            )}
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle className="w-[0.2rem] dark" />
