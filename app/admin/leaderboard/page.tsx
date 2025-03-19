@@ -348,7 +348,6 @@ export default function LeaderboardPage() {
                           </div>
                         </motion.div>
                       </div>
-
                       <div className="relative mt-6">
                         <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                           <motion.div
