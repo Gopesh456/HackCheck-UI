@@ -78,7 +78,10 @@ function LandingPage() {
           <h2 className="mb-8 text-4xl font-bold">
             Ready to Start Your Journey?
           </h2>
-          <button className="px-8 py-4 font-bold text-gray-900 transition-all duration-300 transform rounded-full shadow-lg group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 hover:scale-105 hover:shadow-xl animate-float">
+          <button
+            onClick={handleLoginIn}
+            className="px-8 py-4 font-bold text-gray-900 transition-all duration-300 transform rounded-full shadow-lg group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 hover:scale-105 hover:shadow-xl animate-float"
+          >
             Login for the Hackathon
             <ChevronRight className="inline-block w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
           </button>
