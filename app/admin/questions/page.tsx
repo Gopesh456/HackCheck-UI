@@ -180,25 +180,6 @@ export default function QuestionsManagementPage() {
     }
   };
 
-  // Delete a question using the API
-  const handleDeleteQuestion = async (questionNumber: number) => {
-    if (window.confirm("Are you sure you want to delete this question?")) {
-      try {
-        const postData = {
-          question_number: questionNumber,
-        };
-
-        await fetchData("remove_question/", "POST", postData, false, false);
-
-        // Reload questions after deletion
-        await loadQuestions();
-      } catch (error) {
-        console.error("Error deleting question:", error);
-        alert("Failed to delete question");
-      }
-    }
-  };
-
   // Handle form input changes
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -291,14 +272,6 @@ export default function QuestionsManagementPage() {
                         }
                       >
                         Edit
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() =>
-                          handleDeleteQuestion(question.question_number)
-                        }
-                      >
-                        Delete
                       </button>
                     </div>
                   </li>

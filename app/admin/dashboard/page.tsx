@@ -500,7 +500,7 @@ export default function AdminDashboard() {
       {/* Other Controls */}
       <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
         <h2 className="mb-4 text-xl font-semibold">Advanced Controls</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <button
             className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
             onClick={handleExportResults}
@@ -512,9 +512,6 @@ export default function AdminDashboard() {
             onClick={openSettingsModal}
           >
             System Settings
-          </button>
-          <button className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600">
-            View Logs
           </button>
         </div>
       </div>
