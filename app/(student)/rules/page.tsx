@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Code2,
   Users,
@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { fetchData } from "@/utils/api";
 import { useState } from "react";
+import { LoadingIndicator } from "@/components/LoadingIndicator"; // Import LoadingIndicator
 
 function RuleCard({
   icon: Icon,
@@ -37,6 +38,12 @@ function RuleCard({
 function RulesPage() {
   const router = useRouter();
   const [error, setError] = useState(""); // Added
+  const [loading, setLoading] = useState(true); // Added
+
+  useEffect(() => {
+    setLoading(false); // Set loading to false once the component is mounted
+  }, []);
+
   async function handleStart() {
     const response = await fetchData("check_hackathon_status/", "POST", null);
     if (response.has_started === true) {
@@ -45,6 +52,11 @@ function RulesPage() {
       setError("Hackathon has not started yet");
     }
   }
+
+  if (loading) {
+    return <LoadingIndicator fullScreen={true} />; // Show loading indicator
+  }
+
   return (
     <div className="min-h-screen text-white bg-gray-900">
       {/* Hero Section */}
