@@ -20,7 +20,6 @@ export default function TeamsManagement() {
       setAuthLoading(true);
       const token = Cookies.get("token");
       setAuthToken(token || "");
-      console.log("Token:", token);
 
       if (token) {
         try {
@@ -28,7 +27,6 @@ export default function TeamsManagement() {
           const response = await fetchData("get_teams/", "POST", null);
           if (response && response.teams) {
             setTeams(response.teams);
-            console.log("Teams:", response.teams);
           }
         } catch (error) {
           console.error("Error fetching teams:", error);
@@ -78,7 +76,6 @@ export default function TeamsManagement() {
   const handleDeleteTeam = async (id) => {
     setError(""); // Clear previous errors
     try {
-      console.log(id);
       await fetchData("delete_team/", "POST", { team_id: id });
       setTeams(teams.filter((team) => team.id !== id));
     } catch (error) {

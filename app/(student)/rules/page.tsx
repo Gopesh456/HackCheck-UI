@@ -42,7 +42,6 @@ function RulesPage() {
     if (response.has_started === true) {
       router.push("/dashboard");
     } else {
-      console.log("Hackathon has not started yet");
       setError("Hackathon has not started yet");
     }
   }

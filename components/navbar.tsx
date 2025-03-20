@@ -14,7 +14,6 @@ const Navbar = () => {
     try {
       const response = await fetchData("get_time_left/", "POST", null);
       if (response.time_left !== undefined) {
-        console.log("Time:", response.time_left);
         setTime(response.time_left);
       }
     } catch (error) {
