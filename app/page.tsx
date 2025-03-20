@@ -1,35 +1,8 @@
 "use client";
 import React from "react";
-import {
-  Code2,
-  Sparkles,
-  Rocket,
-  ChevronRight,
-  Globe,
-  Trophy,
-  Users,
-  Brain,
-} from "lucide-react";
+import { Sparkles, Rocket, ChevronRight } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-
-function FeatureCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="p-6 transition-all duration-300 border border-gray-700 bg-gray-800/50 backdrop-blur-lg rounded-xl hover:bg-gray-800">
-      <Icon className="w-8 h-8 mb-4 text-amber-400" />
-      <h3 className="mb-2 text-xl font-bold text-white">{title}</h3>
-      <p className="text-gray-400">{description}</p>
-    </div>
-  );
-}
 
 function StatCard({ number, label }: { number: string; label: string }) {
   return (

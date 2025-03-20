@@ -94,7 +94,18 @@ export default function LeaderboardPage() {
           previousTeamsRef.current = currentTeamsMap;
 
           // Transform API data into our Team interface format
-          const transformedTeams = response.teams.map((item: any) => ({
+          interface ApiResponse {
+            teams: ApiTeam[];
+          }
+
+          interface ApiTeam {
+            id: number;
+            team_name: string;
+            score: number;
+            participants?: string[];
+          }
+
+          const transformedTeams: Team[] = (response as ApiResponse).teams.map((item: ApiTeam) => ({
             id: item.id,
             name: item.team_name,
             points: item.score,
@@ -142,7 +153,7 @@ export default function LeaderboardPage() {
     // Refresh data every 30 seconds
     const interval = setInterval(fetchTeams, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [teams]);
 
   const container = {
     hidden: { opacity: 0 },

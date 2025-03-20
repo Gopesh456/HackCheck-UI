@@ -20,6 +20,22 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
+declare global {
+  interface Window {
+    Sk: {
+      builtinFiles: {
+        files: { [key: string]: string };
+      };
+      configure: (options: { [key: string]: unknown }) => void;
+      importMainWithBody: (name: string, dump: boolean, body: string, canSuspend: boolean) => Promise<string | void>;
+      misceval: {
+        asyncToPromise: (func: () => unknown) => Promise<unknown>;
+      };
+      python3: unknown;
+    };
+  }
+}
+
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), {
   ssr: false,
 });
@@ -44,103 +60,30 @@ const QuestionPage = () => {
   // Initial Python code template
   const initialCode = `# Write your Python code here\n`;
 
+  // Define test case type
+  type TestCase = {
+    id: number;
+    input: string;
+    expectedOutput: string;
+    actualOutput?: string;
+    status?: 'pass' | 'fail' | null;
+  };
+
   // Test cases will be generated from the question data
-  const [testCases, setTestCases] = useState([]);
-  const [hiddenTestCases, setHiddenTestCases] = useState([]);
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [hiddenTestCases, setHiddenTestCases] = useState<{ input: string; expectedOutput: string }[]>([]);
 
   const [fullscreen, setFullscreen] = useState(false);
   const [code, setCode] = useState(initialCode);
   const [key, setKey] = useState(0);
-  const [testResults, setTestResults] = useState([]);
+  const [testResults, setTestResults] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showTestResults, setShowTestResults] = useState(false);
-  const [allHiddenTestsPassed, setAllHiddenTestsPassed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skulptLoaded, setSkulptLoaded] = useState(false);
 
   // Reference to file input element
-  const fileInputRef = useRef(null);
-
-  // Fetch question data
-  const fetchQuestionData = async () => {
-    try {
-      setLoading(true);
-      // Use the question ID from the URL params
-      const questionId = params.qid;
-
-      // Make the API request to get the question
-      const response = await fetchData("get_question/", "POST", {
-        question_number: questionId,
-      });
-
-      // Check if response is already parsed JSON
-      let data;
-      if (typeof response === "object" && !response.json) {
-        // Response is already parsed JSON
-        data = response;
-      } else if (response && typeof response.json === "function") {
-        // Response is a proper Response object
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch question data: ${response.status} ${response.statusText}`
-          );
-        }
-        data = await response.json();
-      } else {
-        throw new Error("Invalid response format from API");
-      }
-
-      if (data.length === 0) {
-        throw new Error("Question data is empty or invalid format");
-      }
-
-      // Set the question data
-      const question = data;
-      setQuestionData(question);
-
-      // Create test cases from the samples
-      if (
-        question.samples &&
-        Array.isArray(question.samples.input) &&
-        Array.isArray(question.samples.output)
-      ) {
-        const newTestCases = question.samples.input.map((input, index) => ({
-          id: index + 1,
-          input: input,
-          expectedOutput: question.samples.output[index] || "",
-          actualOutput: "",
-          status: null, // will be "pass" or "fail"
-        }));
-
-        setTestCases(newTestCases);
-        setTestResults(newTestCases);
-      } else {
-        throw new Error("Sample test cases missing or in wrong format");
-      }
-
-      // Create hidden test cases from the tests
-      if (
-        question.tests &&
-        Array.isArray(question.tests.input) &&
-        Array.isArray(question.tests.output)
-      ) {
-        const newHiddenTestCases = question.tests.input.map((input, index) => ({
-          id: index + 1,
-          input: input,
-          expectedOutput: question.tests.output[index] || "",
-        }));
-
-        setHiddenTestCases(newHiddenTestCases);
-      } else {
-        throw new Error("Hidden test cases missing or in wrong format");
-      }
-    } catch (error) {
-      console.error("Error fetching question:", error);
-      toast.error(`Failed to load question data: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReset = () => {
     setCode(initialCode);
@@ -155,30 +98,6 @@ const QuestionPage = () => {
   };
 
   // Function to run code against hidden test cases
-  const runHiddenTests = async (userCode) => {
-    let allPassed = true;
-
-    for (const testCase of hiddenTestCases) {
-      try {
-        const output = await runCodeWithInput(userCode, testCase.input);
-
-        // Check if there was an error in the execution
-        const hasError = output.startsWith("Error:");
-        const isPassing =
-          !hasError && output.trim() === testCase.expectedOutput.trim();
-
-        if (!isPassing) {
-          allPassed = false;
-          break; // No need to run more tests once one fails
-        }
-      } catch (error) {
-        allPassed = false;
-        break;
-      }
-    }
-
-    return allPassed;
-  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -186,7 +105,7 @@ const QuestionPage = () => {
 
     // Run hidden tests and collect results
     let allPassed = true;
-    const testResultsObj = {};
+    const testResultsObj: { [key: string]: { input: string; expected: string; actual: string; passed: boolean } } = {};
 
     for (let i = 0; i < hiddenTestCases.length; i++) {
       const testCase = hiddenTestCases[i];
@@ -194,14 +113,14 @@ const QuestionPage = () => {
         const output = await runCodeWithInput(code, testCase.input);
 
         // Check if there was an error in the execution
-        const hasError = output.startsWith("Error:");
+        const hasError = (output as string).startsWith("Error:");
         const isPassing =
-          !hasError && output.trim() === testCase.expectedOutput.trim();
+          !hasError && (output as string).trim() === testCase.expectedOutput.trim();
 
         testResultsObj[`test_${i + 1}`] = {
           input: testCase.input,
           expected: testCase.expectedOutput,
-          actual: output,
+          actual: output as string,
           passed: isPassing,
         };
 
@@ -212,7 +131,7 @@ const QuestionPage = () => {
         testResultsObj[`test_${i + 1}`] = {
           input: testCase.input,
           expected: testCase.expectedOutput,
-          actual: `Error: ${error.message}`,
+          actual: `Error: ${(error as Error).message}`,
           passed: false,
         };
         allPassed = false;
@@ -232,7 +151,6 @@ const QuestionPage = () => {
       toast.error("Error submitting code to server");
     }
 
-    setAllHiddenTestsPassed(allPassed);
     setIsSubmitting(false);
 
     toast.success("Code submitted successfully!", {
@@ -246,7 +164,7 @@ const QuestionPage = () => {
     });
   };
 
-  const runCodeWithInput = async (code, input) => {
+  const runCodeWithInput = async (code: string, input: string) => {
     return new Promise((resolve, reject) => {
       if (typeof window === "undefined" || !window.Sk) {
         reject(new Error("Skulpt is not loaded yet"));
@@ -255,19 +173,21 @@ const QuestionPage = () => {
 
       let outputText = "";
       let inputIndex = 0;
-      let inputLines = input.toString().split("\n");
+      const inputLines = input.toString().split("\n");
 
-      function outf(text) {
+      // Function to handle output from Skulpt
+      function outf(text: string): void {
         outputText += text;
       }
 
-      function builtinRead(x) {
+      // Function to read files required by Skulpt
+      function builtinRead(x: string): string {
         if (x !== "<stdin>") {
           if (
-            window.Sk.builtinFiles === undefined ||
-            window.Sk.builtinFiles["files"][x] === undefined
+        window.Sk.builtinFiles === undefined ||
+        window.Sk.builtinFiles["files"][x] === undefined
           ) {
-            throw "File not found: '" + x + "'";
+        throw "File not found: '" + x + "'";
           }
           return window.Sk.builtinFiles["files"][x];
         }
@@ -334,22 +254,23 @@ const QuestionPage = () => {
         const output = await runCodeWithInput(code, testCase.input);
 
         // Check if there was an error in the execution
-        const hasError = output.startsWith("Error:");
+        const hasError = typeof output === 'string' && output.startsWith("Error:");
+        const outputStr = typeof output === 'string' ? output : String(output);
 
         updatedTestResults[i] = {
           ...testCase,
-          actualOutput: output,
+          actualOutput: outputStr,
           // If there's an error, mark as failed immediately
           status: hasError
             ? "fail"
-            : output.trim() === testCase.expectedOutput.trim()
+            : outputStr.trim() === testCase.expectedOutput.trim()
             ? "pass"
             : "fail",
         };
       } catch (error) {
         updatedTestResults[i] = {
           ...testCase,
-          actualOutput: `Error: ${error.toString()}`,
+          actualOutput: `Error: ${error instanceof Error ? error.message : String(error)}`,
           status: "fail",
         };
       }
@@ -365,8 +286,8 @@ const QuestionPage = () => {
   };
 
   // Handle file selection
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     // Check if file is a Python file
@@ -379,8 +300,8 @@ const QuestionPage = () => {
 
     // Read the file content
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target.result;
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const content = (e.target as FileReader).result as string;
       setCode(content);
       setKey((prevKey) => prevKey + 1); // Force editor refresh
       toast.success(`File "${file.name}" uploaded successfully!`);
@@ -393,7 +314,7 @@ const QuestionPage = () => {
     reader.readAsText(file);
 
     // Reset file input value so the same file can be uploaded again
-    event.target.value = null;
+    event.target.value = "";
   };
 
   // Handle Skulpt loading
@@ -406,6 +327,105 @@ const QuestionPage = () => {
   };
 
   useEffect(() => {
+    // Moved fetchQuestionData function inside useEffect
+    const fetchQuestionData = async () => {
+      try {
+        setLoading(true);
+        // Use the question ID from the URL params
+        const questionId = params.qid;
+
+        // Make the API request to get the question
+        const response = await fetchData("get_question/", "POST", {
+          question_number: questionId,
+        });
+
+        // Check if response is already parsed JSON
+        let data;
+        if (typeof response === "object" && !response.json) {
+          // Response is already parsed JSON
+          data = response;
+        } else if (response && typeof response.json === "function") {
+          // Response is a proper Response object
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch question data: ${response.status} ${response.statusText}`
+            );
+          }
+          data = await response.json();
+        } else {
+          throw new Error("Invalid response format from API");
+        }
+
+        if (data.length === 0) {
+          throw new Error("Question data is empty or invalid format");
+        }
+
+        // Set the question data
+        const question = data;
+        setQuestionData(question);
+
+        // Create test cases from the samples
+        if (
+          question.samples &&
+          Array.isArray(question.samples.input) &&
+          Array.isArray(question.samples.output)
+        ) {
+            // Define an interface for the test case structure
+            interface SampleTestCase {
+            id: number;
+            input: string;
+            expectedOutput: string;
+            actualOutput: string;
+            status: 'pass' | 'fail' | null;
+            }
+
+            const newTestCases: SampleTestCase[] = question.samples.input.map((input: string, index: number) => ({
+            id: index + 1,
+            input: input,
+            expectedOutput: question.samples.output[index] || "",
+            actualOutput: "",
+            status: null, // will be "pass" or "fail"
+            }));
+
+          setTestCases(newTestCases);
+          setTestResults(newTestCases);
+        } else {
+          throw new Error("Sample test cases missing or in wrong format");
+        }
+
+        // Create hidden test cases from the tests
+        if (
+          question.tests &&
+          Array.isArray(question.tests.input) &&
+          Array.isArray(question.tests.output)
+        ) {
+            // Define an interface for hidden test cases
+            interface HiddenTestCase {
+            id: number;
+            input: string;
+            expectedOutput: string;
+            }
+
+            const newHiddenTestCases: HiddenTestCase[] = question.tests.input.map(
+            (input: string, index: number) => ({
+              id: index + 1,
+              input: input,
+              expectedOutput: question.tests.output[index] || "",
+            })
+            );
+
+          setHiddenTestCases(newHiddenTestCases);
+        } else {
+          throw new Error("Hidden test cases missing or in wrong format");
+        }
+      } catch (error) {
+        console.error("Error fetching question:", error);
+        toast.error(`Failed to load question data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     // Fetch question data when component mounts
     fetchQuestionData();
 
@@ -419,7 +439,7 @@ const QuestionPage = () => {
     if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
       setSkulptLoaded(true);
     }
-  }, [params.qid]);
+  }, [params.qid, initialCode, savedCode]);
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
@@ -449,15 +469,8 @@ const QuestionPage = () => {
             ) : (
               <ReactMarkdown
                 components={{
-                  code: ({ node, inline, className, children, ...props }) => {
-                    return inline ? (
-                      <code
-                        className="rounded bg-zinc-700 px-1.5 py-0.5 text-sm font-mono text-zinc-200 w-[200px]"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ) : (
+                  code: ({ children, ...props }) => {
+                    return (
                       <code
                         className="block w-full p-4 my-3 overflow-x-auto font-mono rounded-md bg-zinc-800 text-zinc-200"
                         {...props}
@@ -466,31 +479,29 @@ const QuestionPage = () => {
                       </code>
                     );
                   },
-                  blockquote: ({ node, ...props }) => (
+                  blockquote: ({ ...props }) => (
                     <blockquote
                       className="p-2 pl-4 my-3 italic border-l-4 border-zinc-500 bg-zinc-900 rounded-r-md"
                       {...props}
                     />
                   ),
-                  h1: ({ node, ...props }) => (
+                  h1: ({ ...props }) => (
                     <h1
                       className="mb-4 text-2xl font-bold text-white"
                       {...props}
                     />
                   ),
-                  h2: ({ node, ...props }) => (
+                  h2: ({ ...props }) => (
                     <h2
                       className="my-3 text-xl font-bold text-white"
                       {...props}
                     />
                   ),
-                  ul: ({ node, ...props }) => (
+                  ul: ({ ...props }) => (
                     <ul className="ml-6 list-disc" {...props} />
                   ),
-                  li: ({ node, ...props }) => (
-                    <li className="my-1" {...props} />
-                  ),
-                  strong: ({ node, ...props }) => (
+                  li: ({ ...props }) => <li className="my-1" {...props} />,
+                  strong: ({ ...props }) => (
                     <strong className="font-bold " {...props} />
                   ),
                 }}

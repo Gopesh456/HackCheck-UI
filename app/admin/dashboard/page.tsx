@@ -1,18 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Cookie from "js-cookie";
+import { useState, useEffect, useCallback } from "react";
 import { fetchData } from "@/utils/api";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigationWithLoading } from "@/utils/navigation";
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const { setIsLoading } = useLoading();
   const { navigateTo } = useNavigationWithLoading();
-  const [websiteActive, setWebsiteActive] = useState();
+  const [websiteActive, setWebsiteActive] = useState<boolean>(false);
   const [timer, setTimer] = useState({ hours: 1, minutes: 0 });
   const [remainingTime, setRemainingTime] = useState({
     hours: 0,
@@ -35,7 +31,10 @@ export default function AdminDashboard() {
   const [timerRunning, setTimerRunning] = useState(false);
 
   // Update the remaining time parsing function to handle time more robustly
-  const updateRemainingTimeFromSeconds = (timeValue) => {
+
+  type TimeValue = string | number;
+
+  const updateRemainingTimeFromSeconds = useCallback((timeValue: TimeValue) => {
     let hours = 0,
       minutes = 0,
       seconds = 0;
@@ -81,10 +80,10 @@ export default function AdminDashboard() {
     }
 
     setRemainingTime({ hours, minutes, seconds });
-  };
+  }, []);
 
   // Update the getDashboardData function to handle errors better
-  async function getDashboardData() {
+  const getDashboardData = useCallback(async () => {
     try {
       const data = await fetchData("dashboard/", "POST", null, false);
 
@@ -114,7 +113,7 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     }
-  }
+  }, [updateRemainingTimeFromSeconds]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -148,7 +147,7 @@ export default function AdminDashboard() {
     }, 15000); // Sync every 15 seconds
 
     return () => clearInterval(syncInterval);
-  }, []);
+  }, [getDashboardData]);
 
   // Function to toggle website active state
   async function toggleWebsiteStatus() {
@@ -190,8 +189,18 @@ export default function AdminDashboard() {
   };
 
   // Effect to handle countdown
+  const endHackathon = useCallback(async () => {
+    if (websiteActive) {
+      const response = await fetchData("end_hackathon/", "POST", null);
+      if (response.status === 200) {
+        setWebsiteActive(false);
+        console.log("Hackathon ended automatically as timer reached zero");
+      }
+    }
+  }, [websiteActive]);
+
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout | undefined;
 
     if (timerRunning) {
       interval = setInterval(() => {
@@ -222,18 +231,9 @@ export default function AdminDashboard() {
     }
 
     return () => clearInterval(interval);
-  }, [timerRunning]);
+  }, [timerRunning, endHackathon]);
 
   // Function to end hackathon
-  const endHackathon = async () => {
-    if (websiteActive) {
-      const response = await fetchData("end_hackathon/", "POST", null);
-      if (response.status === 200) {
-        setWebsiteActive(false);
-        console.log("Hackathon ended automatically as timer reached zero");
-      }
-    }
-  };
   const handleExportResults = async () => {
     const response = await fetchData("export_leaderboard/", "POST", null);
     if (response.status === 200) {

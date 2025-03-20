@@ -11,11 +11,7 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
-  const loginData = {
-    username: "your-username",
-    password: "your-password",
-  };
+  } = useForm<LoginFormData>();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [leftEyePosition, setLeftEyePosition] = useState({ x: 0, y: 0 });
   const [rightEyePosition, setRightEyePosition] = useState({ x: 0, y: 0 });
@@ -27,9 +23,8 @@ export default function Login() {
   const { setIsLoading: setGlobalLoading } = useLoading();
 
   // For cursor blob animation
-  const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
-  const blobRef = useRef(null);
-  const dotRef = useRef(null);
+  const blobRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
   const [isPointer, setIsPointer] = useState(false);
 
   // References for eyes
@@ -38,7 +33,7 @@ export default function Login() {
 
   // Setup random blinking
   useEffect(() => {
-    let blinkTimeout;
+    let blinkTimeout: NodeJS.Timeout;
 
     const scheduleBlink = () => {
       const nextBlinkDelay = Math.random() * 5000 + 2000; // 2-7 seconds
@@ -60,7 +55,9 @@ export default function Login() {
 
   // Handle mouse movement for both eyes and cursor
   useEffect(() => {
-    const handleMouseMove = (event) => {
+
+
+    const handleMouseMove = (event: MouseEvent): void => {
       const { clientX, clientY } = event;
 
       setMousePosition({
@@ -79,18 +76,22 @@ export default function Login() {
         dotRef.current.style.left = `${clientX}px`;
         dotRef.current.style.top = `${clientY}px`;
       }
-
-      setCursorPosition({ x: clientX, y: clientY });
     };
 
-    const handleMouseOver = (e) => {
-      const target = e.target;
+    // Define the interface for the mouse event target
+    interface MouseTargetElement extends Element {
+      tagName: string;
+      closest(selector: string): Element | null;
+    }
+
+    const handleMouseOver = (e: MouseEvent): void => {
+      const target = e.target as MouseTargetElement;
       setIsPointer(
-        window.getComputedStyle(target).cursor === "pointer" ||
-          target.tagName.toLowerCase() === "a" ||
-          target.tagName.toLowerCase() === "button" ||
-          target.closest("a") ||
-          target.closest("button")
+      window.getComputedStyle(target).cursor === "pointer" ||
+        target.tagName.toLowerCase() === "a" ||
+        target.tagName.toLowerCase() === "button" ||
+        !!target.closest("a") ||
+        !!target.closest("button")
       );
     };
 
@@ -130,8 +131,8 @@ export default function Login() {
 
   // Calculate pupil movement based on vector from eye to cursor
   const calculatePupilTransform = (
-    eyePosition,
-    mousePosition,
+    eyePosition: { x: number; y: number; },
+    mousePosition: { x: number; y: number; },
     maxDistance = 10
   ) => {
     const deltaX = mousePosition.x - eyePosition.x;
@@ -142,7 +143,7 @@ export default function Login() {
     const angle = Math.atan2(deltaY, deltaX);
 
     // Limit movement to maxDistance
-    let movementX = Math.min(distance, maxDistance) * Math.cos(angle);
+    const movementX = Math.min(distance, maxDistance) * Math.cos(angle);
     let movementY = Math.min(distance, maxDistance) * Math.sin(angle);
 
     // Add constraint for Y-axis to keep pupil within the 3/4 circle
@@ -163,7 +164,28 @@ export default function Login() {
   );
   const router = useRouter();
 
-  async function login(formData) {
+  interface LoginFormData {
+    username: string;
+    password: string;
+  }
+
+  interface ResponseData {
+    token?: string;
+    error?: string;
+  }
+  
+  // Define a custom API error type
+  interface ApiError extends Error {
+    response?: {
+      status?: number;
+      data?: {
+        message?: string;
+      };
+    };
+    status?: number;
+  }
+
+  async function login(formData: LoginFormData) {
     if (!formData.username || !formData.password) {
       setErrorMessage("Username and password are required");
       return;
@@ -174,7 +196,7 @@ export default function Login() {
       setGlobalLoading(true);
       setErrorMessage(""); // Clear previous error messages
 
-      const response = await fetchData(
+      const response: ResponseData = await fetchData(
         "admin_signin/",
         "POST",
         formData,
@@ -182,27 +204,37 @@ export default function Login() {
         true
       );
 
+      // Handle successful login
       if (response.token) {
-        Cookies.set("token", response.token, {
-          secure: true,
-          sameSite: "strict",
-          expires: 7, // Token expires in 7 days
-        });
-        router.push("/admin/dashboard");
-      } else {
+        Cookies.set('authToken', response.token, { expires: 1 }); // Expires in 1 day
+        router.push('/admin/dashboard'); // Redirect to admin dashboard
+      } else if (response.error) {
         setErrorMessage(response.error);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error("Login failed:", error);
+      
+      const apiError = error as ApiError;
+
+      if (apiError.response?.data?.message) {
+        // Use server-provided error message if available
+        setErrorMessage(apiError.response.data.message);
+      } else if (apiError.response?.status === 401) {
+        setErrorMessage("Invalid credentials. Please check and try again.");
+      } else if (apiError.status === 400 || apiError.response?.status === 400) {
+        setErrorMessage("Invalid login details. Please check and try again.");
+      } else if (apiError.status === 429 || apiError.response?.status === 429) {
+        setErrorMessage("Too many login attempts. Please try again later.");
       console.error("Login failed:", error);
 
-      if (error.response?.data?.message) {
+      if (error instanceof Error && (error as ApiError).response?.data?.message) {
         // Use server-provided error message if available
-        setErrorMessage(error.response.data.message);
-      } else if (error.status === 401 || error.response?.status === 401) {
+        setErrorMessage((error as ApiError).response?.data?.message || "An unknown error occurred");
+      } else if (error instanceof Error && (error as ApiError).response?.status === 401) {
         setErrorMessage("Invalid credentials. Please check and try again.");
-      } else if (error.status === 400 || error.response?.status === 400) {
+      } else if (error instanceof Error && ((error as ApiError).status === 400 || (error as ApiError).response?.status === 400)) {
         setErrorMessage("Invalid login details. Please check and try again.");
-      } else if (error.status === 429 || error.response?.status === 429) {
+      } else if (error instanceof Error && ((error as ApiError).status === 429 || (error as ApiError).response?.status === 429)) {
         setErrorMessage("Too many login attempts. Please try again later.");
       } else if (!navigator.onLine) {
         setErrorMessage(
@@ -211,7 +243,7 @@ export default function Login() {
       } else {
         setErrorMessage("Login failed. Please try again later.");
       }
-    } finally {
+    } }finally {
       setIsLoading(false);
       setGlobalLoading(false);
     }

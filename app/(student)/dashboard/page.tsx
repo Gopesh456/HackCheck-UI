@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 
 import Navbar from "@/components/navbar"; // Import the Navbar component
-import Link from "next/link";
 import { useRouter } from "next/navigation"; // Import router for navigation
 import { fetchData } from "@/utils/api";
 // import AcmeLogo from "../components/AcmeLogo";

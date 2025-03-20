@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { fetchData } from "@/utils/api";
-import test from "node:test";
 export default function QuestionsManagementPage() {
   // State for managing questions
   const [apiQuestions, setApiQuestions] = useState<ApiQuestion[]>([]);

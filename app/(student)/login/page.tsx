@@ -1,5 +1,9 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { fetchData } from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -10,11 +14,7 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
-  const loginData = {
-    username: "your-username",
-    password: "your-password",
-  };
+  } = useForm<LoginFormData>();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [leftEyePosition, setLeftEyePosition] = useState({ x: 0, y: 0 });
   const [rightEyePosition, setRightEyePosition] = useState({ x: 0, y: 0 });
@@ -25,9 +25,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   // For cursor blob animation
-  const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
-  const blobRef = useRef(null);
-  const dotRef = useRef(null);
+  const blobRef = useRef<HTMLDivElement | null>(null);
+  const dotRef = useRef<HTMLDivElement | null>(null);
   const [isPointer, setIsPointer] = useState(false);
 
   // References for eyes
@@ -36,7 +35,7 @@ export default function Login() {
 
   // Setup random blinking
   useEffect(() => {
-    let blinkTimeout;
+    let blinkTimeout: NodeJS.Timeout | number;
 
     const scheduleBlink = () => {
       const nextBlinkDelay = Math.random() * 5000 + 2000; // 2-7 seconds
@@ -58,7 +57,7 @@ export default function Login() {
 
   // Handle mouse movement for both eyes and cursor
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
 
       setMousePosition({
@@ -77,18 +76,16 @@ export default function Login() {
         dotRef.current.style.left = `${clientX}px`;
         dotRef.current.style.top = `${clientY}px`;
       }
-
-      setCursorPosition({ x: clientX, y: clientY });
     };
 
-    const handleMouseOver = (e) => {
-      const target = e.target;
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
       setIsPointer(
         window.getComputedStyle(target).cursor === "pointer" ||
           target.tagName.toLowerCase() === "a" ||
           target.tagName.toLowerCase() === "button" ||
-          target.closest("a") ||
-          target.closest("button")
+          !!target.closest("a") ||
+          !!target.closest("button")
       );
     };
 
@@ -128,8 +125,8 @@ export default function Login() {
 
   // Calculate pupil movement based on vector from eye to cursor
   const calculatePupilTransform = (
-    eyePosition,
-    mousePosition,
+    eyePosition: { x: number; y: number; },
+    mousePosition: { x: number; y: number; },
     maxDistance = 10
   ) => {
     const deltaX = mousePosition.x - eyePosition.x;
@@ -140,7 +137,7 @@ export default function Login() {
     const angle = Math.atan2(deltaY, deltaX);
 
     // Limit movement to maxDistance
-    let movementX = Math.min(distance, maxDistance) * Math.cos(angle);
+    const movementX = Math.min(distance, maxDistance) * Math.cos(angle);
     let movementY = Math.min(distance, maxDistance) * Math.sin(angle);
 
     // Add constraint for Y-axis to keep pupil within the 3/4 circle
@@ -161,7 +158,18 @@ export default function Login() {
   );
   const router = useRouter();
 
-  async function login(formData) {
+  interface LoginFormData {
+    username: string;
+    participant_name: string;
+    password: string;
+  }
+
+  interface LoginResponse {
+    token: string;
+    error?: string;
+  }
+
+  async function login(formData: LoginFormData) {
     try {
       setIsLoading(true);
       setErrorMessage("");
@@ -183,7 +191,7 @@ export default function Login() {
         password: formData.password,
       };
 
-      const response = await fetchData(
+      const response: LoginResponse = await fetchData(
         "login/",
         "POST",
         requestData,

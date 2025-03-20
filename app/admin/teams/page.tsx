@@ -6,7 +6,13 @@ import Cookies from "js-cookie";
 import { fetchData } from "@/utils/api";
 
 export default function TeamsManagement() {
-  const [teams, setTeams] = useState([]);
+  interface Team {
+    id: number;
+    name: string;
+    password: string;
+  }
+
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true); // Add specific auth loading state
   const [newTeam, setNewTeam] = useState({ team_name: "", password: "" });
@@ -44,27 +50,45 @@ export default function TeamsManagement() {
     checkAuth();
   }, []);
 
-  const handleInputChange = (e) => {
+  interface TeamInput {
+    team_name: string;
+    password: string;
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewTeam((prev) => ({ ...prev, [name]: value }));
+    setNewTeam((prev: TeamInput) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddTeam = async (e) => {
+  interface AddTeamResponse {
+    id: number;
+    name: string;
+    password: string;
+  }
+
+  const handleAddTeam = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newTeam.team_name || !newTeam.password) return;
 
     setIsAdding(true);
     setError(""); // Clear previous errors
     try {
-      const addedTeam = await fetchData("register/", "POST", newTeam);
+      const addedTeam: AddTeamResponse = await fetchData("register/", "POST", newTeam);
       setTeams([...teams, addedTeam]);
       setNewTeam({ team_name: "", password: "" });
       window.location.reload();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error adding team:", error);
       // Check if the error response has error details
-      if (error.response && error.response.error) {
-        setError(error.response.error);
+      type ErrorResponse = {
+        response?: {
+          error?: string;
+        };
+      };
+
+      const typedError = error as ErrorResponse;
+      if (error instanceof Error && typedError.response && typedError.response.error) {
+        setError(typedError.response.error);
       } else {
         setError("Failed to add team. Please try again.");
       }
@@ -73,16 +97,22 @@ export default function TeamsManagement() {
     }
   };
 
-  const handleDeleteTeam = async (id) => {
+  interface DeleteTeamResponse {
+    response?: {
+      error?: string;
+    };
+  }
+
+  const handleDeleteTeam = async (id: number) => {
     setError(""); // Clear previous errors
     try {
       await fetchData("delete_team/", "POST", { team_id: id });
       setTeams(teams.filter((team) => team.id !== id));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error deleting team:", error);
-      // Check if the error response has error details
-      if (error.response && error.response.error) {
-        setError(error.response.error);
+      const typedError = error as DeleteTeamResponse;
+      if (typedError.response && typedError.response.error) {
+        setError(typedError.response.error);
       } else {
         setError("Failed to delete team. Please try again.");
       }

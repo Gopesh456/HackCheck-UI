@@ -8,7 +8,6 @@ interface LoadingIndicatorProps {
 }
 
 export function LoadingIndicator({
-  size = "md",
   fullScreen = false,
   message = "Loading...",
 }: LoadingIndicatorProps) {

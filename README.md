@@ -11,6 +11,7 @@ A web application for participating in and managing hackathon challenges.
 - [Building for Production](#building-for-production)
 - [Troubleshooting](#troubleshooting)
 - [Pages and Functionality](#pages-and-functionality)
+- [Learn More](#learn-more)
 
 ## Prerequisites
 
@@ -41,8 +42,8 @@ Before you begin, ensure you have the following installed on your computer:
 Open your terminal/command prompt and run:
 
 ```bash
-git clone https://github.com/your-username/hackathon2.0.git
-cd hackathon2.0
+git clone https://github.com/Gopesh456/HackCheck-UI
+cd HackCheck-UI
 ```
 
 If you received the project as a ZIP file, extract it to your desired location and navigate to it using your terminal.
@@ -63,16 +64,6 @@ yarn install
 
 This will install all the required packages defined in the `package.json` file.
 
-### Step 3: Set up Environment Variables (if applicable)
-
-If the project requires environment variables:
-
-1. Copy the `.env.example` file to a new file called `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-2. Open `.env.local` in your code editor and fill in the required values.
-
 ## Project Structure
 
 Next.js follows a file-based routing system. Here's a quick overview:
@@ -81,6 +72,8 @@ Next.js follows a file-based routing system. Here's a quick overview:
   - `(student)/` - Student-related routes in a route group
     - `dashboard/` - Dashboard page
     - `question/` - Question pages
+    - `login/` - Login page
+    - `rules/` - Rules page
   - `admin/` - Admin-related routes
     - `dashboard/` - Admin dashboard page
     - `questions/` - Manage questions page
@@ -188,23 +181,33 @@ The production version will be optimized for better performance.
 
 ### Student Pages
 
-- **Dashboard (`/student/dashboard`)**
+- **Dashboard (`/dashboard`)**
 
   - Displays a list of hackathon questions.
   - Each question shows its title, difficulty, score, and status.
   - Clicking "Solve Challenge" navigates to the question page with a loading indicator.
 
-- **Question (`/student/question/[qid]`)**
+- **Question (`/question/[qid]`)**
 
   - Displays the details of a specific question.
   - Allows students to write and run code against test cases.
   - Provides functionality to save, reset, and submit code.
 
-- **Login (`/student/login`)**
+- **Login (`/login`)**
+
   - Allows students to log in to their accounts.
   - Requires team name, participant name, and password.
 
+- **Rules (`/rules`)**
+  - Displays the rules of the hackathon.
+  - Provides a button to start coding.
+
 ### Admin Pages
+
+- **Login (`/admin/login`)**
+
+  - Allows admins to log in to their accounts.
+  - Requires admin id and password.
 
 - **Dashboard (`/admin/dashboard`)**
 
@@ -224,6 +227,27 @@ The production version will be optimized for better performance.
 - **Leaderboard (`/admin/leaderboard`)**
   - Displays the leaderboard with team rankings based on points.
   - Shows team names, points, and members.
+
+### Make an Admin Account
+
+1. **Create a Superuser in Django DB**
+  - Run the following command in your terminal:
+    ```bash
+    python manage.py createsuperuser
+    ```
+  - Follow the prompts to set up the superuser account.
+
+2. **Access the Django Admin Portal**
+  - Navigate to the Django admin portal in your browser.
+
+3. **Enable Admin Privileges**
+  - Open the **Users** section.
+  - Select the user you want to make an admin.
+  - Enable the "is_admin" checkbox.
+  - Save the changes.
+
+4. **Login to Admin Portal**
+  - Go to `/admin/login` and log in with your admin credentials.
 
 ### Common Components
 
