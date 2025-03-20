@@ -202,7 +202,7 @@ export default function Login() {
         setIsLoading(false);
         return;
       } else {
-        router.push("/dashboard");
+        router.push("/rules");
       }
     } catch (error) {
       console.error("Login failed:", error);
