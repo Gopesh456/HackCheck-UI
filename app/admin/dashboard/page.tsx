@@ -85,7 +85,7 @@ export default function AdminDashboard() {
   // Update the getDashboardData function to handle errors better
   const getDashboardData = useCallback(async () => {
     try {
-      const data = await fetchData("dashboard/", "POST", null, false);
+      const data = await fetchData("dashboard/", "POST", null, false, false);
 
       // Handle hackathon status
       if (data.hackathon_status !== undefined) {

@@ -55,8 +55,6 @@ export default function Login() {
 
   // Handle mouse movement for both eyes and cursor
   useEffect(() => {
-
-
     const handleMouseMove = (event: MouseEvent): void => {
       const { clientX, clientY } = event;
 
@@ -87,11 +85,11 @@ export default function Login() {
     const handleMouseOver = (e: MouseEvent): void => {
       const target = e.target as MouseTargetElement;
       setIsPointer(
-      window.getComputedStyle(target).cursor === "pointer" ||
-        target.tagName.toLowerCase() === "a" ||
-        target.tagName.toLowerCase() === "button" ||
-        !!target.closest("a") ||
-        !!target.closest("button")
+        window.getComputedStyle(target).cursor === "pointer" ||
+          target.tagName.toLowerCase() === "a" ||
+          target.tagName.toLowerCase() === "button" ||
+          !!target.closest("a") ||
+          !!target.closest("button")
       );
     };
 
@@ -131,8 +129,8 @@ export default function Login() {
 
   // Calculate pupil movement based on vector from eye to cursor
   const calculatePupilTransform = (
-    eyePosition: { x: number; y: number; },
-    mousePosition: { x: number; y: number; },
+    eyePosition: { x: number; y: number },
+    mousePosition: { x: number; y: number },
     maxDistance = 10
   ) => {
     const deltaX = mousePosition.x - eyePosition.x;
@@ -173,7 +171,7 @@ export default function Login() {
     token?: string;
     error?: string;
   }
-  
+
   // Define a custom API error type
   interface ApiError extends Error {
     response?: {
@@ -206,14 +204,14 @@ export default function Login() {
 
       // Handle successful login
       if (response.token) {
-        Cookies.set('authToken', response.token, { expires: 1 }); // Expires in 1 day
-        router.push('/admin/dashboard'); // Redirect to admin dashboard
+        Cookies.set("token", response.token, { expires: 1 }); // Expires in 1 day
+        router.push("/admin/dashboard"); // Redirect to admin dashboard
       } else if (response.error) {
         setErrorMessage(response.error);
       }
     } catch (error: unknown) {
       console.error("Login failed:", error);
-      
+
       const apiError = error as ApiError;
 
       if (apiError.response?.data?.message) {
@@ -225,25 +223,43 @@ export default function Login() {
         setErrorMessage("Invalid login details. Please check and try again.");
       } else if (apiError.status === 429 || apiError.response?.status === 429) {
         setErrorMessage("Too many login attempts. Please try again later.");
-      console.error("Login failed:", error);
+        console.error("Login failed:", error);
 
-      if (error instanceof Error && (error as ApiError).response?.data?.message) {
-        // Use server-provided error message if available
-        setErrorMessage((error as ApiError).response?.data?.message || "An unknown error occurred");
-      } else if (error instanceof Error && (error as ApiError).response?.status === 401) {
-        setErrorMessage("Invalid credentials. Please check and try again.");
-      } else if (error instanceof Error && ((error as ApiError).status === 400 || (error as ApiError).response?.status === 400)) {
-        setErrorMessage("Invalid login details. Please check and try again.");
-      } else if (error instanceof Error && ((error as ApiError).status === 429 || (error as ApiError).response?.status === 429)) {
-        setErrorMessage("Too many login attempts. Please try again later.");
-      } else if (!navigator.onLine) {
-        setErrorMessage(
-          "Network error. Please check your internet connection."
-        );
-      } else {
-        setErrorMessage("Login failed. Please try again later.");
+        if (
+          error instanceof Error &&
+          (error as ApiError).response?.data?.message
+        ) {
+          // Use server-provided error message if available
+          setErrorMessage(
+            (error as ApiError).response?.data?.message ||
+              "An unknown error occurred"
+          );
+        } else if (
+          error instanceof Error &&
+          (error as ApiError).response?.status === 401
+        ) {
+          setErrorMessage("Invalid credentials. Please check and try again.");
+        } else if (
+          error instanceof Error &&
+          ((error as ApiError).status === 400 ||
+            (error as ApiError).response?.status === 400)
+        ) {
+          setErrorMessage("Invalid login details. Please check and try again.");
+        } else if (
+          error instanceof Error &&
+          ((error as ApiError).status === 429 ||
+            (error as ApiError).response?.status === 429)
+        ) {
+          setErrorMessage("Too many login attempts. Please try again later.");
+        } else if (!navigator.onLine) {
+          setErrorMessage(
+            "Network error. Please check your internet connection."
+          );
+        } else {
+          setErrorMessage("Login failed. Please try again later.");
+        }
       }
-    } }finally {
+    } finally {
       setIsLoading(false);
       setGlobalLoading(false);
     }

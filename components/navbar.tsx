@@ -5,8 +5,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { fetchData } from "@/utils/api";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
+  const router = useRouter();
   // Countdown state
   const [time, setTime] = useState(0); // Set initial countdown time in seconds (e.g., 1 hour)
   async function getTime() {
@@ -32,6 +35,13 @@ const Navbar = () => {
 
   // Format time for display
   const formattedTime = new Date(time * 1000).toISOString().substr(11, 8);
+
+  // Logout function to remove token cookie
+  const handleLogout = () => {
+    Cookies.remove("authToken"); // Remove the authentication token cookie
+    // Redirect to login page after logout
+    router.push("/login");
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full p-4 text-white border-b border-gray-800 shadow-lg bg-transperant backdrop-blur-md ">
@@ -108,7 +118,10 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-          <Button className="flex items-center px-5 font-medium">
+          <Button 
+            className="flex items-center px-5 font-medium"
+            onClick={handleLogout}
+          >
             <span>Logout</span>
           </Button>
         </div>
