@@ -89,8 +89,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-          
-          <Button 
+          <Button
             className="flex items-center px-5 font-medium"
             onClick={handleLogout}
           >

@@ -22,10 +22,9 @@ Before you begin, ensure you have the following installed on your computer:
    - Download and install from [nodejs.org](https://nodejs.org/)
    - Verify installation by running `node -v` in your terminal/command prompt
 
-2. **npm** (comes with Node.js) or **yarn**
+2. **npm** (comes with Node.js)
 
    - Verify npm installation: `npm -v`
-   - If you prefer yarn: Install with `npm install -g yarn` and verify with `yarn -v`
 
 3. **Git** (for cloning the repository)
 
@@ -54,12 +53,6 @@ Inside the project folder, run:
 
 ```bash
 npm install
-```
-
-OR if you're using yarn:
-
-```bash
-yarn install
 ```
 
 This will install all the required packages defined in the `package.json` file.
@@ -95,12 +88,6 @@ To start the development server with hot-reloading:
 npm run dev
 ```
 
-OR with yarn:
-
-```bash
-yarn dev
-```
-
 This will start the application on [http://localhost:3000](http://localhost:3000).
 
 Open this URL in your browser to see the application.
@@ -121,19 +108,9 @@ When you're ready to deploy your application:
    npm run build
    ```
 
-   OR
-
-   ```bash
-   yarn build
-   ```
-
 2. Start the production server:
    ```bash
    npm run start
-   ```
-   OR
-   ```bash
-   yarn start
    ```
 
 The production version will be optimized for better performance.
@@ -231,23 +208,27 @@ The production version will be optimized for better performance.
 ### Make an Admin Account
 
 1. **Create a Superuser in Django DB**
-  - Run the following command in your terminal:
-    ```bash
-    python manage.py createsuperuser
-    ```
-  - Follow the prompts to set up the superuser account.
+
+- Run the following command in your terminal:
+  ```bash
+  python manage.py createsuperuser
+  ```
+- Follow the prompts to set up the superuser account.
 
 2. **Access the Django Admin Portal**
-  - Navigate to the Django admin portal in your browser.
+
+- Navigate to the Django admin portal in your browser.
 
 3. **Enable Admin Privileges**
-  - Open the **Users** section.
-  - Select the user you want to make an admin.
-  - Enable the "is_admin" checkbox.
-  - Save the changes.
+
+- Open the **Users** section.
+- Select the user you want to make an admin.
+- Enable the "is_admin" checkbox.
+- Save the changes.
 
 4. **Login to Admin Portal**
-  - Go to `/admin/login` and log in with your admin credentials.
+
+- Go to `/admin/login` and log in with your admin credentials.
 
 ### Common Components
 

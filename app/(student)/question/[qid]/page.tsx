@@ -27,7 +27,12 @@ declare global {
         files: { [key: string]: string };
       };
       configure: (options: { [key: string]: unknown }) => void;
-      importMainWithBody: (name: string, dump: boolean, body: string, canSuspend: boolean) => Promise<string | void>;
+      importMainWithBody: (
+        name: string,
+        dump: boolean,
+        body: string,
+        canSuspend: boolean
+      ) => Promise<string | void>;
       misceval: {
         asyncToPromise: (func: () => unknown) => Promise<unknown>;
       };
@@ -66,12 +71,14 @@ const QuestionPage = () => {
     input: string;
     expectedOutput: string;
     actualOutput?: string;
-    status?: 'pass' | 'fail' | null;
+    status?: "pass" | "fail" | null;
   };
 
   // Test cases will be generated from the question data
   const [testCases, setTestCases] = useState<TestCase[]>([]);
-  const [hiddenTestCases, setHiddenTestCases] = useState<{ input: string; expectedOutput: string }[]>([]);
+  const [hiddenTestCases, setHiddenTestCases] = useState<
+    { input: string; expectedOutput: string }[]
+  >([]);
 
   const [fullscreen, setFullscreen] = useState(false);
   const [code, setCode] = useState(initialCode);
@@ -105,7 +112,14 @@ const QuestionPage = () => {
 
     // Run hidden tests and collect results
     let allPassed = true;
-    const testResultsObj: { [key: string]: { input: string; expected: string; actual: string; passed: boolean } } = {};
+    const testResultsObj: {
+      [key: string]: {
+        input: string;
+        expected: string;
+        actual: string;
+        passed: boolean;
+      };
+    } = {};
 
     for (let i = 0; i < hiddenTestCases.length; i++) {
       const testCase = hiddenTestCases[i];
@@ -115,7 +129,8 @@ const QuestionPage = () => {
         // Check if there was an error in the execution
         const hasError = (output as string).startsWith("Error:");
         const isPassing =
-          !hasError && (output as string).trim() === testCase.expectedOutput.trim();
+          !hasError &&
+          (output as string).trim() === testCase.expectedOutput.trim();
 
         testResultsObj[`test_${i + 1}`] = {
           input: testCase.input,
@@ -184,10 +199,10 @@ const QuestionPage = () => {
       function builtinRead(x: string): string {
         if (x !== "<stdin>") {
           if (
-        window.Sk.builtinFiles === undefined ||
-        window.Sk.builtinFiles["files"][x] === undefined
+            window.Sk.builtinFiles === undefined ||
+            window.Sk.builtinFiles["files"][x] === undefined
           ) {
-        throw "File not found: '" + x + "'";
+            throw "File not found: '" + x + "'";
           }
           return window.Sk.builtinFiles["files"][x];
         }
@@ -254,8 +269,9 @@ const QuestionPage = () => {
         const output = await runCodeWithInput(code, testCase.input);
 
         // Check if there was an error in the execution
-        const hasError = typeof output === 'string' && output.startsWith("Error:");
-        const outputStr = typeof output === 'string' ? output : String(output);
+        const hasError =
+          typeof output === "string" && output.startsWith("Error:");
+        const outputStr = typeof output === "string" ? output : String(output);
 
         updatedTestResults[i] = {
           ...testCase,
@@ -270,7 +286,9 @@ const QuestionPage = () => {
       } catch (error) {
         updatedTestResults[i] = {
           ...testCase,
-          actualOutput: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          actualOutput: `Error: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
           status: "fail",
         };
       }
@@ -370,22 +388,24 @@ const QuestionPage = () => {
           Array.isArray(question.samples.input) &&
           Array.isArray(question.samples.output)
         ) {
-            // Define an interface for the test case structure
-            interface SampleTestCase {
+          // Define an interface for the test case structure
+          interface SampleTestCase {
             id: number;
             input: string;
             expectedOutput: string;
             actualOutput: string;
-            status: 'pass' | 'fail' | null;
-            }
+            status: "pass" | "fail" | null;
+          }
 
-            const newTestCases: SampleTestCase[] = question.samples.input.map((input: string, index: number) => ({
-            id: index + 1,
-            input: input,
-            expectedOutput: question.samples.output[index] || "",
-            actualOutput: "",
-            status: null, // will be "pass" or "fail"
-            }));
+          const newTestCases: SampleTestCase[] = question.samples.input.map(
+            (input: string, index: number) => ({
+              id: index + 1,
+              input: input,
+              expectedOutput: question.samples.output[index] || "",
+              actualOutput: "",
+              status: null, // will be "pass" or "fail"
+            })
+          );
 
           setTestCases(newTestCases);
           setTestResults(newTestCases);
@@ -399,20 +419,20 @@ const QuestionPage = () => {
           Array.isArray(question.tests.input) &&
           Array.isArray(question.tests.output)
         ) {
-            // Define an interface for hidden test cases
-            interface HiddenTestCase {
+          // Define an interface for hidden test cases
+          interface HiddenTestCase {
             id: number;
             input: string;
             expectedOutput: string;
-            }
+          }
 
-            const newHiddenTestCases: HiddenTestCase[] = question.tests.input.map(
+          const newHiddenTestCases: HiddenTestCase[] = question.tests.input.map(
             (input: string, index: number) => ({
               id: index + 1,
               input: input,
               expectedOutput: question.tests.output[index] || "",
             })
-            );
+          );
 
           setHiddenTestCases(newHiddenTestCases);
         } else {
@@ -420,7 +440,11 @@ const QuestionPage = () => {
         }
       } catch (error) {
         console.error("Error fetching question:", error);
-        toast.error(`Failed to load question data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        toast.error(
+          `Failed to load question data: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       } finally {
         setLoading(false);
       }
@@ -472,7 +496,7 @@ const QuestionPage = () => {
                   code: ({ children, ...props }) => {
                     return (
                       <code
-                        className="block w-full p-4 my-3 overflow-x-auto font-mono rounded-md bg-zinc-800 text-zinc-200"
+                        className="inline px-2 py-1 my-3 overflow-x-auto font-mono rounded-md w-fit bg-zinc-900 text-zinc-200"
                         {...props}
                       >
                         {children}
