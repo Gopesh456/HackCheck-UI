@@ -111,7 +111,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="bg-[#121418]">
+      <div className="h-full w-full bg-[#121418]">
         <Navbar />
         <div className="bg-[#121418] text-white p-5 h-dvh dark px-30">
           <div className="pl-3 text-4xl font-bold border-l-4 dark:text-white border-l-white ">
