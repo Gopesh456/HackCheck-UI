@@ -9,12 +9,24 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        golden: {
+          light: "#FFD700",
+          DEFAULT: "#DAA520",
+          dark: "#B8860B",
+        },
+        dark: {
+          lighter: "#2A2A2A",
+          DEFAULT: "#1A1A1A",
+          darker: "#121212",
+        },
+      },
+    },
   },
-  darkMode: "class",
   plugins: [
     heroui(),
     require("@tailwindcss/typography"),
-    // ...your other plugins
+    // ...your oth  er plugins
   ],
 };

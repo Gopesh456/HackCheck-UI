@@ -464,6 +464,48 @@ const QuestionPage = () => {
       setSkulptLoaded(true);
     }
   }, [params.qid, initialCode, savedCode]);
+  const handleShare = async () => {
+    try {
+      // Check code size limit (50KB is a reasonable limit)
+      const MAX_CODE_SIZE = 25 * 1024; // 50KB in bytes/characters
+
+      if (code.length > MAX_CODE_SIZE) {
+        toast.error(
+          `Code is too large to share (${(code.length / 1024).toFixed(
+            2
+          )}KB). Maximum size is ${MAX_CODE_SIZE / 1024}KB.`,
+          {
+            duration: 5000,
+            style: { backgroundColor: "#d32f2f", color: "white" },
+          }
+        );
+        return;
+      }
+
+      // Save the code to the server
+      await fetchData("save_shared_code/", "POST", {
+        question_number: params.qid,
+        shared_code: code,
+      });
+
+      // Show success message
+      toast.success("Code shared successfully!", {
+        duration: 3000,
+        style: { backgroundColor: "#088255", color: "white" },
+      });
+    } catch (error) {
+      console.error("Error sharing code:", error);
+      toast.error(
+        `Failed to share code: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        {
+          duration: 3000,
+          style: { backgroundColor: "#d32f2f", color: "white" },
+        }
+      );
+    }
+  };
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
@@ -539,6 +581,8 @@ const QuestionPage = () => {
         <ResizablePanel defaultSize={55}>
           <div className="w-full p-6 overflow-y-auto h-[90vh]">
             <div className="flex justify-end w-full gap-2 bg-[#151616] mb-3 rounded-md p-2 ">
+              <Button onClick={handleShare}>Share</Button>
+
               <Button
                 onClick={() => {
                   setFullscreen(!fullscreen);
