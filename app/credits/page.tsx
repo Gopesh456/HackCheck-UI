@@ -36,7 +36,7 @@ function CreditPage() {
           <TypewriterHero
             title="Thank You"
             description="For your participation in the hackathon."
-            words={["Participants", "Mentors", "Contributors"]}
+            words={["Participants", "Experts", "Volunteers", "Organizers"]}
             typingSpeed={80}
             deletingSpeed={40}
             pauseDuration={2000}
@@ -45,7 +45,7 @@ function CreditPage() {
         <div className="flex justify-center w-full">
           <div className="grid w-full max-w-6xl gap-8 md:grid-cols-2 ">
             {developers.map((dev, index) => (
-                <HolographicCard
+              <HolographicCard
                 key={index}
                 className="p-8 rounded-xl"
                 backgroundColor="#0D0D17"
@@ -53,19 +53,19 @@ function CreditPage() {
                 depthEffect={true}
                 glowIntensity={1.2}
                 shadowColor="rgba(16, 185, 129, 0.25)"
-                >
+              >
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                  <h2 className="text-2xl font-bold text-[#DAA520]">
-                    {dev.name}
-                  </h2>
-                  <p className="text-gray-400">{dev.role}</p>
+                    <h2 className="text-2xl font-bold text-[#DAA520]">
+                      {dev.name}
+                    </h2>
+                    <p className="text-gray-400">{dev.role}</p>
                   </div>
                   <motion.div
-                  whileHover={{ scale: 1.1, rotate: 360 }}
-                  transition={{ duration: 0.3 }}
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ duration: 0.3 }}
                   >
-                  <Code2 className="w-8 h-8 text-[#DAA520]" />
+                    <Code2 className="w-8 h-8 text-[#DAA520]" />
                   </motion.div>
                 </div>
                 <p className="mb-6 text-gray-300">{dev.description}</p>
@@ -80,7 +80,7 @@ function CreditPage() {
                   <Github className="w-5 h-5 text-white" />
                   <span className="text-white">GitHub Profile</span>
                 </motion.a>
-                </HolographicCard>
+              </HolographicCard>
             ))}
           </div>
         </div>
