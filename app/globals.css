@@ -163,6 +163,7 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
 @keyframes float {
   0% {
     transform: translateY(0px);
