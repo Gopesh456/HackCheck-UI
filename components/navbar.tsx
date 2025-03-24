@@ -220,7 +220,9 @@ const Navbar = () => {
             </motion.div>
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
               <button
-                onClick={() => setShowInboxModal(true)}
+                onClick={() => {
+                  setShowInboxModal(true);
+                }}
                 className="flex items-center text-gray-300 transition-colors hover:text-white"
               >
                 <svg
@@ -325,7 +327,7 @@ const Navbar = () => {
                           onClick={() =>
                             downloadCode({
                               url: item.download_url,
-                              filename: `question_${item.question_number}_${item.username}.py`
+                              filename: `question_${item.question_number}_${item.username}.py`,
                             })
                           }
                         >

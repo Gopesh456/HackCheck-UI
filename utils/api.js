@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 
-const API_BASE_URL = "http://192.168.40.1:8000/";
+const API_BASE_URL = "https://ackheck--ryash0720072806-0dcew4r3.leapcell.dev/";
 
 const fetchData = async (
   endpoint,
