@@ -581,8 +581,6 @@ const QuestionPage = () => {
         <ResizablePanel defaultSize={55}>
           <div className="w-full p-6 overflow-y-auto h-[90vh]">
             <div className="flex justify-end w-full gap-2 bg-[#151616] mb-3 rounded-md p-2 ">
-              <Button onClick={handleShare}>Share</Button>
-
               {!skulptLoaded && (
                 <Button
                   variant="outline"
@@ -610,6 +608,7 @@ const QuestionPage = () => {
                   Loading Python Interpreter...
                 </Button>
               )}
+              <Button onClick={handleShare}>Share</Button>
 
               <Button
                 onClick={() => {
@@ -707,7 +706,12 @@ const QuestionPage = () => {
                             <div>
                               <div className="mb-1 text-gray-400">Input:</div>
                               <div className="p-2 font-mono rounded bg-black/30">
-                                {test.input}
+                                {test.input.split("\n").map((line, index) => (
+                                  <React.Fragment key={index}>
+                                    {line}
+                                    <br />
+                                  </React.Fragment>
+                                ))}
                               </div>
                             </div>
                             <div>
@@ -715,7 +719,14 @@ const QuestionPage = () => {
                                 Expected:
                               </div>
                               <div className="p-2 font-mono rounded bg-black/30">
-                                {test.expectedOutput}
+                                {test.expectedOutput
+                                  .split("\n")
+                                  .map((line, index) => (
+                                    <React.Fragment key={index}>
+                                      {line}
+                                      <br />
+                                    </React.Fragment>
+                                  ))}
                               </div>
                             </div>
                             <div>
@@ -723,7 +734,14 @@ const QuestionPage = () => {
                                 Your Output:
                               </div>
                               <div className="p-2 overflow-x-auto font-mono rounded bg-black/30">
-                                {test.actualOutput || "-"}
+                                {(test.actualOutput || "")
+                                  .split("\n")
+                                  .map((line, index) => (
+                                    <React.Fragment key={index}>
+                                      {line}
+                                      <br />
+                                    </React.Fragment>
+                                  )) || "-"}
                               </div>
                             </div>
                           </div>
