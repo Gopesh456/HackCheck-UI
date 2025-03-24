@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
+import os from "os"; // Add this line
 
-const API_BASE_URL = os.environ.get('API_BASE_URL');
+const API_BASE_URL = "https://hackcheckapi.leapcell.app/";
 
 const fetchData = async (
   endpoint,
