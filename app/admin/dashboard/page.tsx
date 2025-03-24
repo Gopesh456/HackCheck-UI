@@ -235,10 +235,7 @@ export default function AdminDashboard() {
 
   // Function to end hackathon
   const handleExportResults = async () => {
-    const response = await fetchData("export_leaderboard/", "POST", null);
-    if (response.status === 200) {
-      console.log("Results exported successfully");
-    }
+    console.log("Results exported successfully");
   };
 
   // Function to reset database
@@ -501,12 +498,13 @@ export default function AdminDashboard() {
       <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
         <h2 className="mb-4 text-xl font-semibold">Advanced Controls</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <button
-            className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
-            onClick={handleExportResults}
+          <a
+            className="flex justify-center p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+            download="leaderboard.csv"
+            href="https://hackcheckapi.leapcell.app/export_leaderboard/"
           >
-            Export Results
-          </button>
+            <button onClick={handleExportResults}>Export Results</button>
+          </a>
           <button
             className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
             onClick={openSettingsModal}

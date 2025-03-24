@@ -1,5 +1,4 @@
 import Cookies from "js-cookie";
-import os from "os"; // Add this line
 
 const API_BASE_URL = "https://hackcheckapi.leapcell.app/";
 
