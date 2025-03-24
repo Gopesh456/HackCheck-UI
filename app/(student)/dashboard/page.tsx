@@ -169,7 +169,10 @@ const Dashboard = () => {
                 </div>
                 <button
                   onClick={() => handleSolveChallenge(question.number)}
-                  disabled={loadingQuestion === question.number}
+                  disabled={
+                    loadingQuestion === question.number ||
+                    question.Status === "Correct"
+                  }
                   className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800 disabled:opacity-70"
                 >
                   {loadingQuestion === question.number ? (
@@ -195,6 +198,18 @@ const Dashboard = () => {
                         ></path>
                       </svg>
                       Loading...
+                    </div>
+                  ) : question.Status === "Correct" ? (
+                    <div className="flex items-center">
+                      Solved
+                      <svg
+                        className="w-4 h-4 ml-2  text-[#ffffff9e]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                      </svg>
                     </div>
                   ) : (
                     "Solve Challenge"
