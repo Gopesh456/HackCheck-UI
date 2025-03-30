@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import Script from "next/script";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 
 import {
   ResizableHandle,
@@ -100,6 +100,12 @@ const QuestionPage = () => {
 
   // Keep a reference to the current CodeMirror view to manage cursor position
   const editorRef = useRef<EditorView | null>(null);
+
+  // Page monitoring states
+  const [pageLeaveCount, setPageLeaveCount] = useState(0);
+  const [totalTimeAway, setTotalTimeAway] = useState(0);
+  const [showWarningBanner, setShowWarningBanner] = useState(true);
+  const timeAwayRef = useRef<number | null>(null);
 
   // Function to autosave code to localStorage without moving cursor
   const handleAutoSave = (newCode: string, viewUpdate?: ViewUpdate) => {
@@ -324,7 +330,7 @@ def eval_arithmetic(expr):
         // Function to read files required by Skulpt
         function builtinRead(x: string): string {
           if (x !== "<stdin>") {
-            if (      
+            if (
               window.Sk.builtinFiles === undefined ||
               window.Sk.builtinFiles["files"][x] === undefined
             ) {
@@ -485,6 +491,131 @@ def eval_arithmetic(expr):
     setSkulptLoadingError("Failed to load Skulpt libraries");
     console.error("Failed to load Skulpt");
   };
+
+  // Function to log suspicious activity
+  const logActivity = async (activityType: string, details: any) => {
+    try {
+      await fetchData("log_activity/", "POST", {
+        question_number: params.qid,
+        activity_type: activityType,
+        details: details,
+      });
+    } catch (error) {
+      console.error("Error logging activity:", error);
+    }
+  };
+
+  // Handle page visibility change (tab switching/minimizing)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Record time when page was hidden
+        timeAwayRef.current = Date.now();
+
+        setPageLeaveCount((prev) => prev + 1);
+
+        logActivity("page_hidden", {
+          event: "Page was hidden (tab switch or window minimize)",
+          count: pageLeaveCount + 1,
+        });
+      } else if (
+        document.visibilityState === "visible" &&
+        timeAwayRef.current
+      ) {
+        // Calculate time away and update total
+        const timeAway = Math.round((Date.now() - timeAwayRef.current) / 1000);
+        setTotalTimeAway((prev) => prev + timeAway);
+
+        // Show warning toast
+        toast.warning(
+          `You were away from the page for ${timeAway} seconds. This activity has been logged.`,
+          {
+            duration: 5000,
+          }
+        );
+
+        logActivity("page_visible", {
+          event: "Page became visible again",
+          timeAway: timeAway,
+          totalTimeAway: totalTimeAway + timeAway,
+        });
+
+        timeAwayRef.current = null;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [params.qid, pageLeaveCount, totalTimeAway]);
+
+  // Track window focus and blur (clicking outside the browser)
+  useEffect(() => {
+    const handleBlur = () => {
+      if (!timeAwayRef.current) {
+        timeAwayRef.current = Date.now();
+
+        setPageLeaveCount((prev) => prev + 1);
+
+        logActivity("window_blur", {
+          event: "Window lost focus (clicked outside browser)",
+          count: pageLeaveCount + 1,
+        });
+      }
+    };
+
+    const handleFocus = () => {
+      if (timeAwayRef.current) {
+        const timeAway = Math.round((Date.now() - timeAwayRef.current) / 1000);
+        setTotalTimeAway((prev) => prev + timeAway);
+
+        toast.warning(
+          `You clicked outside the browser for ${timeAway} seconds. This activity has been logged.`,
+          {
+            duration: 5000,
+          }
+        );
+
+        logActivity("window_focus", {
+          event: "Window regained focus",
+          timeAway: timeAway,
+          totalTimeAway: totalTimeAway + timeAway,
+        });
+
+        timeAwayRef.current = null;
+      }
+    };
+
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [params.qid, pageLeaveCount, totalTimeAway]);
+
+  // Warn on page exit attempt
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const message =
+        "Are you sure you want to leave? This action will be logged.";
+
+      logActivity("page_exit_attempt", {
+        event: "User attempted to leave/refresh the page",
+      });
+
+      e.preventDefault();
+      e.returnValue = message;
+      return message;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [params.qid]);
 
   useEffect(() => {
     // Moved fetchQuestionData function inside useEffect
@@ -696,6 +827,30 @@ def eval_arithmetic(expr):
         onLoad={() => !skulptLoaded && handleSkulptLoad()}
       />
       <Navbar />
+
+      {/* Warning Banner */}
+      {showWarningBanner && (
+        <div className="py-2 px-4 bg-amber-700 flex items-center justify-between">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-white" />
+            <span>
+              <strong>Warning:</strong> Leaving this page or switching tabs is
+              not allowed during the hackathon and will be logged.
+              {pageLeaveCount > 0 &&
+                ` You have left the page ${pageLeaveCount} times (${totalTimeAway} seconds total).`}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowWarningBanner(false)}
+            className="text-white hover:bg-amber-800"
+          >
+            <X size={16} />
+          </Button>
+        </div>
+      )}
+
       <ResizablePanelGroup
         direction="horizontal"
         className="max-w-md rounded-lg md:min-w-full h-dvh"
