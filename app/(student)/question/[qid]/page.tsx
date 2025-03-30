@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 import { python } from "@codemirror/lang-python";
 import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
-import { EditorView } from "@codemirror/view";
+import { EditorView, type ViewUpdate } from "@codemirror/view";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
@@ -99,10 +99,10 @@ const QuestionPage = () => {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Keep a reference to the current CodeMirror view to manage cursor position
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<EditorView | null>(null);
 
   // Function to autosave code to localStorage without moving cursor
-  const handleAutoSave = (newCode: string, viewUpdate?: any) => {
+  const handleAutoSave = (newCode: string, viewUpdate?: ViewUpdate) => {
     // Store the editor reference when available
     if (viewUpdate && !editorRef.current) {
       editorRef.current = viewUpdate.view;
