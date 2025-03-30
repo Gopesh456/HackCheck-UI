@@ -169,8 +169,15 @@ const Dashboard = () => {
                 </div>
                 <button
                   onClick={() => handleSolveChallenge(question.number)}
-                  disabled={loadingQuestion === question.number}
-                  className="text-white hover:text-white border border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800 disabled:opacity-70"
+                  disabled={
+                    loadingQuestion === question.number ||
+                    question.Status.toLowerCase() === "correct"
+                  }
+                  className={`text-white border rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ${
+                    question.Status.toLowerCase() === "correct"
+                      ? "border-white cursor-default"
+                      : "border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
+                  } disabled:opacity-70`}
                 >
                   {loadingQuestion === question.number ? (
                     <div className="flex items-center">
@@ -195,6 +202,24 @@ const Dashboard = () => {
                         ></path>
                       </svg>
                       Loading...
+                    </div>
+                  ) : question.Status.toLowerCase() === "correct" ? (
+                    <div className="flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-2 -ml-1 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Solved
                     </div>
                   ) : (
                     "Solve Challenge"

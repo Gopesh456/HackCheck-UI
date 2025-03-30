@@ -88,9 +88,131 @@ const QuestionPage = () => {
   const [showTestResults, setShowTestResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skulptLoaded, setSkulptLoaded] = useState(false);
+  const [skulptLoadingError, setSkulptLoadingError] = useState<string | null>(
+    null
+  );
 
   // Reference to file input element
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [autoSaving, setAutoSaving] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep a reference to the current CodeMirror view to manage cursor position
+  const editorRef = useRef<any>(null);
+
+  // Function to autosave code to localStorage without moving cursor
+  const handleAutoSave = (newCode: string, viewUpdate?: any) => {
+    // Store the editor reference when available
+    if (viewUpdate && !editorRef.current) {
+      editorRef.current = viewUpdate.view;
+    }
+
+    // Update the code state only when it's needed for other operations
+    // but not during typical typing to avoid cursor resets
+    setCode(newCode);
+
+    // Clear any existing timeout to debounce the save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set autosaving indicator
+    setAutoSaving(true);
+
+    // Create a new timeout to save after 1 second of inactivity
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      // Save to localStorage without causing re-renders
+      localStorage.setItem(savedCode, newCode);
+
+      // Clear the autosaving indicator after a brief delay
+      setTimeout(() => {
+        setAutoSaving(false);
+      }, 500);
+    }, 1000);
+  };
+
+  // Clean up the timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Function to preprocess code before execution - fixing input() statements and handling eval()
+  const preprocessCode = (code: string): string => {
+    // First, replace input("any text here") with just input()
+    // This regex matches input() with any string inside (handling quotes correctly)
+    let processedCode = code.replace(
+      /input\s*\(\s*(?:["'].*?["']|'''.*?'''|""".*?""")\s*\)/g,
+      "input()"
+    );
+
+    // Check if the code contains eval()
+    if (processedCode.includes("eval(")) {
+      // Add our custom eval implementation at the beginning of the code
+      const customEvalImplementation = `
+# Custom implementation of eval() function for Skulpt
+def custom_eval(expr):
+    # Convert the expression to a string if it's not already
+    expr_str = str(expr)
+    
+    # Handle basic numeric operations
+    try:
+        # Try direct numeric evaluation first
+        return float(expr_str) if '.' in expr_str else int(expr_str)
+    except ValueError:
+        pass
+    
+    # Handle basic math operations
+    import re
+    
+    # Simple arithmetic operations
+    if re.match(r'^\\s*\\d+\\s*[+\\-*/]\\s*\\d+\\s*$', expr_str):
+        return eval_arithmetic(expr_str)
+    
+    # Handle list/tuple literals
+    if expr_str.startswith('[') and expr_str.endswith(']'):
+        # Simple list parsing
+        items = expr_str[1:-1].split(',')
+        return [custom_eval(item.strip()) for item in items if item.strip()]
+    
+    if expr_str.startswith('(') and expr_str.endswith(')'):
+        # Simple tuple parsing
+        items = expr_str[1:-1].split(',')
+        return tuple(custom_eval(item.strip()) for item in items if item.strip())
+    
+    # If we can't handle it, return the original expression
+    return expr_str
+
+def eval_arithmetic(expr):
+    # Very simple evaluation of basic arithmetic
+    import re
+    # Find numbers and operator
+    match = re.match(r'^\\s*(\\d+(?:\\.\\d+)?)\\s*([+\\-*/])\\s*(\\d+(?:\\.\\d+)?)\\s*$', expr)
+    if match:
+        a, op, b = match.groups()
+        a = float(a) if '.' in a else int(a)
+        b = float(b) if '.' in b else int(b)
+        
+        if op == '+': return a + b
+        if op == '-': return a - b
+        if op == '*': return a * b
+        if op == '/': return a / b
+    
+    return expr
+`;
+
+      // Replace all eval() calls with our custom_eval()
+      processedCode =
+        customEvalImplementation +
+        processedCode.replace(/eval\s*\(/g, "custom_eval(");
+    }
+
+    return processedCode;
+  };
 
   const handleReset = () => {
     setCode(initialCode);
@@ -186,60 +308,72 @@ const QuestionPage = () => {
         return;
       }
 
-      let outputText = "";
-      let inputIndex = 0;
-      const inputLines = input.toString().split("\n");
+      try {
+        // Preprocess the code to handle input() function properly and add eval() support
+        const processedCode = preprocessCode(code);
 
-      // Function to handle output from Skulpt
-      function outf(text: string): void {
-        outputText += text;
-      }
+        let outputText = "";
+        let inputIndex = 0;
+        const inputLines = input.toString().split("\n");
 
-      // Function to read files required by Skulpt
-      function builtinRead(x: string): string {
-        if (x !== "<stdin>") {
-          if (
-            window.Sk.builtinFiles === undefined ||
-            window.Sk.builtinFiles["files"][x] === undefined
-          ) {
-            throw "File not found: '" + x + "'";
+        // Function to handle output from Skulpt
+        function outf(text: string): void {
+          outputText += text;
+        }
+
+        // Function to read files required by Skulpt
+        function builtinRead(x: string): string {
+          if (x !== "<stdin>") {
+            if (      
+              window.Sk.builtinFiles === undefined ||
+              window.Sk.builtinFiles["files"][x] === undefined
+            ) {
+              throw "File not found: '" + x + "'";
+            }
+            return window.Sk.builtinFiles["files"][x];
           }
-          return window.Sk.builtinFiles["files"][x];
-        }
 
-        // Return the predefined input
-        if (inputIndex < inputLines.length) {
-          return inputLines[inputIndex++];
-        }
-        return "";
-      }
-
-      // Prepare Skulpt
-      window.Sk.configure({
-        output: outf,
-        read: builtinRead,
-        __future__: window.Sk.python3,
-        inputfun: function () {
-          // This prevents actual prompting for input
+          // Return the predefined input
           if (inputIndex < inputLines.length) {
             return inputLines[inputIndex++];
           }
           return "";
-        },
-      });
+        }
 
-      // Run the original code as-is
-      window.Sk.misceval
-        .asyncToPromise(() => {
-          return window.Sk.importMainWithBody("<stdin>", false, code, true);
-        })
-        .then(() => {
-          resolve(outputText.trim());
-        })
-        .catch((error) => {
-          // Any exception means the test case failed
-          resolve(`Error: ${error.toString()}`);
+        // Prepare Skulpt
+        window.Sk.configure({
+          output: outf,
+          read: builtinRead,
+          __future__: window.Sk.python3,
+          inputfun: function () {
+            // This prevents actual prompting for input
+            if (inputIndex < inputLines.length) {
+              return inputLines[inputIndex++];
+            }
+            return "";
+          },
         });
+
+        // Run the processed code
+        window.Sk.misceval
+          .asyncToPromise(() => {
+            return window.Sk.importMainWithBody(
+              "<stdin>",
+              false,
+              processedCode,
+              true
+            );
+          })
+          .then(() => {
+            resolve(outputText.trim());
+          })
+          .catch((error) => {
+            // Any exception means the test case failed
+            resolve(`Error: ${error.toString()}`);
+          });
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 
@@ -339,9 +473,17 @@ const QuestionPage = () => {
   const handleSkulptLoad = () => {
     if (window.Sk && window.Sk.misceval) {
       setSkulptLoaded(true);
+      setSkulptLoadingError(null);
     } else {
-      console.error("Failed to load Skulpt");
+      setSkulptLoadingError("Failed to initialize Skulpt interpreter");
+      console.error("Failed to load Skulpt properly");
     }
+  };
+
+  // Handle Skulpt loading error
+  const handleSkulptError = () => {
+    setSkulptLoadingError("Failed to load Skulpt libraries");
+    console.error("Failed to load Skulpt");
   };
 
   useEffect(() => {
@@ -463,7 +605,27 @@ const QuestionPage = () => {
     if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
       setSkulptLoaded(true);
     }
-  }, [params.qid, initialCode, savedCode]);
+
+    // Add a timeout to check if Skulpt failed to load
+    const timeoutId = setTimeout(() => {
+      if (!skulptLoaded && typeof window !== "undefined") {
+        // If not loaded after 5 seconds, try loading from CDN again
+        const skulptScript = document.createElement("script");
+        skulptScript.src = "https://skulpt.org/js/skulpt.min.js";
+        skulptScript.onload = () => {
+          const stdlibScript = document.createElement("script");
+          stdlibScript.src = "https://skulpt.org/js/skulpt-stdlib.js";
+          stdlibScript.onload = handleSkulptLoad;
+          stdlibScript.onerror = handleSkulptError;
+          document.head.appendChild(stdlibScript);
+        };
+        skulptScript.onerror = handleSkulptError;
+        document.head.appendChild(skulptScript);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
+  }, [params.qid, initialCode, savedCode, skulptLoaded]);
   const handleShare = async () => {
     try {
       // Check code size limit (50KB is a reasonable limit)
@@ -509,12 +671,29 @@ const QuestionPage = () => {
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
-      <Script src="/skulpt.min.js" strategy="afterInteractive" />
+      {/* Load Skulpt from CDN with preload priority */}
+      <Script
+        src="https://skulpt.org/js/skulpt.min.js"
+        strategy="beforeInteractive"
+        onLoad={() => console.log("Skulpt core loaded")}
+        onError={handleSkulptError}
+      />
+      <Script
+        src="https://skulpt.org/js/skulpt-stdlib.js"
+        strategy="beforeInteractive"
+        onLoad={handleSkulptLoad}
+        onError={handleSkulptError}
+      />
+      {/* Fallback for local files if CDN fails */}
+      <Script
+        src="/skulpt.min.js"
+        strategy="afterInteractive"
+        onLoad={() => !skulptLoaded && handleSkulptLoad()}
+      />
       <Script
         src="/skulpt-stdlib.js"
         strategy="afterInteractive"
-        onLoad={handleSkulptLoad}
-        onError={() => console.error("Failed to load Skulpt stdlib")}
+        onLoad={() => !skulptLoaded && handleSkulptLoad()}
       />
       <Navbar />
       <ResizablePanelGroup
@@ -608,6 +787,39 @@ const QuestionPage = () => {
                   Loading Python Interpreter...
                 </Button>
               )}
+              {skulptLoadingError && (
+                <Button
+                  variant="outline"
+                  className="text-red-500 border-red-500"
+                  onClick={() => window.location.reload()}
+                >
+                  Python Interpreter Failed to Load. Click to Reload
+                </Button>
+              )}
+              {autoSaving && (
+                <span className="flex items-center text-xs text-gray-400">
+                  <svg
+                    className="w-3 h-3 mr-1 animate-spin"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Auto-saving...
+                </span>
+              )}
               <Button onClick={handleShare}>Share</Button>
 
               <Button
@@ -644,7 +856,9 @@ const QuestionPage = () => {
                   closeBrackets: true,
                   indentOnInput: true,
                 }}
-                onChange={(value) => setCode(value)}
+                onChange={(value, viewUpdate) =>
+                  handleAutoSave(value, viewUpdate)
+                }
               />
             </div>
 
