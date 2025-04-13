@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import { fetchData } from "@/utils/api";
 import Navbar from "@/components/navbar";
@@ -493,16 +493,11 @@ def eval_arithmetic(expr):
   };
 
   // Function to log suspicious activity
-  const logActivity = async (activityType: string, details: any) => {
-    try {
-      await fetchData("log_activity/", "POST", {
-        question_number: params.qid,
-        activity_type: activityType,
-        details: details,
-      });
-    } catch (error) {
-      console.error("Error logging activity:", error);
-    }
+  const logActivity = async (
+    activityType: string,
+    details: Record<string, unknown>
+  ) => {
+    console.log(activityType, details);
   };
 
   // Handle page visibility change (tab switching/minimizing)
@@ -799,6 +794,9 @@ def eval_arithmetic(expr):
       );
     }
   };
+  const changeLineNumber = (output: string): string => {
+    return output;
+  };
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
@@ -987,35 +985,37 @@ def eval_arithmetic(expr):
               <Button onClick={handleReset}>Reset</Button>
               <Button onClick={handleSave}>Save</Button>
             </div>
-            <div>
-              <CodeMirror
-                key={key}
-                value={code}
-                theme={vscodeDark}
-                height={showTestResults ? "40vh" : "60vh"} // Adjust height based on test results visibility
-                width="100%"
-                className="h-full text-baserounded-md"
-                extensions={[
-                  python(),
-                  customTheme,
-                  autocompletion({ activateOnTyping: true }),
-                  closeBrackets(),
-                  EditorView.lineWrapping,
-                ]}
-                basicSetup={{
-                  lineNumbers: true,
-                  highlightActiveLine: true,
-                  foldGutter: true,
-                  autocompletion: true,
-                  bracketMatching: true,
-                  closeBrackets: true,
-                  indentOnInput: true,
-                }}
-                onChange={(value, viewUpdate) =>
-                  handleAutoSave(value, viewUpdate)
-                }
-              />
-            </div>
+            <Suspense fallback={<h1>loading....</h1>}>
+              <div>
+                <CodeMirror
+                  key={key}
+                  value={code}
+                  theme={vscodeDark}
+                  height={showTestResults ? "40vh" : "60vh"} // Adjust height based on test results visibility
+                  width="100%"
+                  className="h-full text-baserounded-md"
+                  extensions={[
+                    python(),
+                    customTheme,
+                    autocompletion({ activateOnTyping: true }),
+                    closeBrackets(),
+                    EditorView.lineWrapping,
+                  ]}
+                  basicSetup={{
+                    lineNumbers: true,
+                    highlightActiveLine: true,
+                    foldGutter: true,
+                    autocompletion: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    indentOnInput: true,
+                  }}
+                  onChange={(value, viewUpdate) =>
+                    handleAutoSave(value, viewUpdate)
+                  }
+                />
+              </div>
+            </Suspense>
 
             {/* Test Results Area - Only shown when showTestResults is true */}
             {showTestResults && (
@@ -1103,14 +1103,26 @@ def eval_arithmetic(expr):
                                 Your Output:
                               </div>
                               <div className="p-2 overflow-x-auto font-mono rounded bg-black/30">
-                                {(test.actualOutput || "")
-                                  .split("\n")
-                                  .map((line, index) => (
-                                    <React.Fragment key={index}>
-                                      {line}
-                                      <br />
-                                    </React.Fragment>
-                                  )) || "-"}
+                                {(() => {
+                                  // Modify the output directly
+                                  const modifiedOutput =
+                                    test.actualOutput?.replace(
+                                      /line (\d+)/g,
+                                      (_, num) => `line ${parseInt(num) - 50}`
+                                    ) || "";
+
+                                  // Return the JSX we want to render
+                                  return (
+                                    modifiedOutput
+                                      .split("\n")
+                                      .map((line, index) => (
+                                        <React.Fragment key={index}>
+                                          {line}
+                                          <br />
+                                        </React.Fragment>
+                                      )) || "-"
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
