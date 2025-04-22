@@ -61,12 +61,32 @@ This will install all the required packages defined in the `package.json` file.
 
 ## Quick Start (Recommended for Beginners)
 
-If you are on Windows, simply double-click the `start.bat` file in the project folder. This script will:
+If you are on Windows, simply double-click the `start.bat` file in the project folder. 
+For Linux/macOS users, simply double-click the `start.sh` script .
+This script will:
 
 - Check if Node.js is installed
 - Install all required dependencies
 - Build the application for production
 - Start the server automatically
+
+### Windows
+
+1. Double-click `start.bat` or run it from Command Prompt:
+   ```
+   start.bat
+   ```
+
+### Linux / macOS
+
+1. Make the file executable if needed:
+   ```
+   chmod +x start.sh
+   ```
+2. Then run:
+   ```
+   ./start.sh
+   ```
 
 **If Node.js is not installed:**  
 The script will show a clear error message and provide a link to download Node.js:  
@@ -285,25 +305,8 @@ The production version will be optimized for better performance.
 - **Loader**
   - A loading indicator component used to show loading states.
 
-## Usage
 
-### Windows
 
-1. Double-click `start.bat` or run it from Command Prompt:
-   ```
-   start.bat
-   ```
-
-### Linux / macOS
-
-1. Make the file executable if needed:
-   ```
-   chmod +x start.sh
-   ```
-2. Then run:
-   ```
-   ./start.sh
-   ```
 
 ## Learn More
 
