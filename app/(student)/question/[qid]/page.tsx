@@ -794,9 +794,6 @@ def eval_arithmetic(expr):
       );
     }
   };
-  const changeLineNumber = (output: string): string => {
-    return output;
-  };
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">

@@ -6,6 +6,8 @@ A web application for participating in and managing hackathon challenges.
 
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
+- [Quick Start (Recommended for Beginners)](#quick-start-recommended-for-beginners)
+- [Manual Setup](#manual-setup)
 - [Project Structure](#project-structure)
 - [Running the Application](#running-the-application)
 - [Building for Production](#building-for-production)
@@ -35,6 +37,49 @@ Before you begin, ensure you have the following installed on your computer:
    - Download from [code.visualstudio.com](https://code.visualstudio.com/)
 
 ## Getting Started
+
+### Step 1: Clone the Repository
+
+Open your terminal/command prompt and run:
+
+```bash
+git clone https://github.com/Gopesh456/HackCheck-UI
+cd HackCheck-UI
+```
+
+If you received the project as a ZIP file, extract it to your desired location and navigate to it using your terminal.
+
+### Step 2: Install Dependencies
+
+Inside the project folder, run:
+
+```bash
+npm install
+```
+
+This will install all the required packages defined in the `package.json` file.
+
+## Quick Start (Recommended for Beginners)
+
+If you are on Windows, simply double-click the `start.bat` file in the project folder. This script will:
+
+- Check if Node.js is installed
+- Install all required dependencies
+- Build the application for production
+- Start the server automatically
+
+**If Node.js is not installed:**  
+The script will show a clear error message and provide a link to download Node.js:  
+https://nodejs.org/
+
+**After everything is set up successfully:**  
+You will see a message with the URL to open the app (usually http://localhost:3000).
+
+---
+
+## Manual Setup
+
+If you prefer to use the terminal or are on Mac/Linux, follow these steps:
 
 ### Step 1: Clone the Repository
 
@@ -239,6 +284,26 @@ The production version will be optimized for better performance.
 
 - **Loader**
   - A loading indicator component used to show loading states.
+
+## Usage
+
+### Windows
+
+1. Double-click `start.bat` or run it from Command Prompt:
+   ```
+   start.bat
+   ```
+
+### Linux / macOS
+
+1. Make the file executable if needed:
+   ```
+   chmod +x start.sh
+   ```
+2. Then run:
+   ```
+   ./start.sh
+   ```
 
 ## Learn More
 

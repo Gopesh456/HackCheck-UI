@@ -8,7 +8,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { fetchData } from "@/utils/api";
 import confetti from "canvas-confetti";
 
@@ -79,108 +79,18 @@ export default function LeaderboardPage() {
   const [celebrationComplete, setCelebrationComplete] = useState(false);
   const nextTimeFetchRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch time left from API with smart timing
-  useEffect(() => {
-    const fetchTimeLeft = async () => {
-      try {
-        const response = await fetchData("get_time_left/", "POST", null);
+  // Trigger celebration animations with more confetti
+  // (Duplicate declaration removed)
 
-        // Handle the API response, which has format {time_left: 52.947691}
-        if (response && typeof response.time_left === "number") {
-          // API returns seconds directly as time_left
-          const totalSeconds = Math.round(response.time_left);
-
-          // Set the time left state
-          setTimeLeft(totalSeconds);
-
-          // Show countdown animation when 5 or fewer seconds remain (but hide at 1 sec)
-          const shouldShowCountdown = totalSeconds <= 5 && totalSeconds > 1;
-          setShowCountdown(shouldShowCountdown);
-
-          // Set next fetch time based on current seconds remaining
-          let nextFetchDelay = 10000; // Default: 10 seconds
-
-          if (totalSeconds <= 10) {
-            nextFetchDelay = 1000; // 1 second when under 10 seconds
-          } else if (totalSeconds <= 60) {
-            nextFetchDelay = 5000; // 5 seconds when under 60 seconds
-          } else if (totalSeconds <= 300) {
-            nextFetchDelay = 10000; // 10 seconds when under 5 minutes
-          } else {
-            nextFetchDelay = 30000; // 30 seconds for longer times
-          }
-
-          // Clear any existing timeout
-          if (nextTimeFetchRef.current) {
-            clearTimeout(nextTimeFetchRef.current);
-          }
-
-          // Schedule next fetch unless time is already at 1 second or less
-          if (totalSeconds > 1) {
-            nextTimeFetchRef.current = setTimeout(
-              fetchTimeLeft,
-              nextFetchDelay
-            );
-          } else if (totalSeconds <= 1 && !celebrationComplete) {
-            // Set time to 0 to indicate hackathon is over
-            setTimeLeft(0);
-            setShowCountdown(false); // Ensure countdown is hidden
-            triggerCelebration();
-          }
-        } else if (response && typeof response.time_left_seconds === "number") {
-          // Alternative API format
-          const totalSeconds = Math.round(response.time_left_seconds);
-          setTimeLeft(totalSeconds);
-          setShowCountdown(totalSeconds <= 5 && totalSeconds > 1);
-
-          // End hackathon at 1 second remaining
-          if (totalSeconds <= 1 && !celebrationComplete) {
-            setTimeLeft(0);
-            setShowCountdown(false);
-            triggerCelebration();
-          }
-        } else if (response && typeof response.time_left_minutes === "number") {
-          // Fallback for old API format (minutes)
-          const totalSeconds = Math.round(response.time_left_minutes * 60);
-          setTimeLeft(totalSeconds);
-          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
-
-          // End hackathon at 1 second remaining
-          if (totalSeconds <= 1 && !celebrationComplete) {
-            setTimeLeft(0);
-            triggerCelebration();
-          }
-        } else if (response && typeof response === "number") {
-          // Direct number response
-          const totalSeconds = Math.round(response);
-          setTimeLeft(totalSeconds);
-          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
-
-          // End hackathon at 1 second remaining
-          if (totalSeconds <= 1 && !celebrationComplete) {
-            setTimeLeft(0);
-            triggerCelebration();
-          }
-        } else {
-          if (response) {
-          }
-        }
-      } catch (error) {}
-    };
-
-    // Initial fetch
-    fetchTimeLeft();
-
-    // Clean up timeout on unmount
-    return () => {
-      if (nextTimeFetchRef.current) {
-        clearTimeout(nextTimeFetchRef.current);
-      }
-    };
-  }, [celebrationComplete]);
+  // Helper function for confetti
+  const triggerConfetti = (options: confetti.Options) => {
+    if (typeof window !== "undefined") {
+      confetti(options);
+    }
+  };
 
   // Trigger celebration animations with more confetti
-  const triggerCelebration = () => {
+  const triggerCelebration = useCallback(() => {
     if (celebrationComplete) return;
 
     setCelebrationComplete(true);
@@ -284,14 +194,109 @@ export default function LeaderboardPage() {
         ticks: 400,
       });
     }, 4000);
-  };
+  }, [celebrationComplete, teams]);
 
-  // Helper function for confetti
-  const triggerConfetti = (options: confetti.Options) => {
-    if (typeof window !== "undefined") {
-      confetti(options);
-    }
-  };
+  // Fetch time left from API with smart timing
+  useEffect(() => {
+    const fetchTimeLeft = async () => {
+      try {
+        const response = await fetchData("get_time_left/", "POST", null);
+
+        // Handle the API response, which has format {time_left: 52.947691}
+        if (response && typeof response.time_left === "number") {
+          // API returns seconds directly as time_left
+          const totalSeconds = Math.round(response.time_left);
+
+          // Set the time left state
+          setTimeLeft(totalSeconds);
+
+          // Show countdown animation when 5 or fewer seconds remain (but hide at 1 sec)
+          const shouldShowCountdown = totalSeconds <= 5 && totalSeconds > 1;
+          setShowCountdown(shouldShowCountdown);
+
+          // Set next fetch time based on current seconds remaining
+          let nextFetchDelay = 10000; // Default: 10 seconds
+
+          if (totalSeconds <= 10) {
+            nextFetchDelay = 1000; // 1 second when under 10 seconds
+          } else if (totalSeconds <= 60) {
+            nextFetchDelay = 5000; // 5 seconds when under 60 seconds
+          } else if (totalSeconds <= 300) {
+            nextFetchDelay = 10000; // 10 seconds when under 5 minutes
+          } else {
+            nextFetchDelay = 30000; // 30 seconds for longer times
+          }
+
+          // Clear any existing timeout
+          if (nextTimeFetchRef.current) {
+            clearTimeout(nextTimeFetchRef.current);
+          }
+
+          // Schedule next fetch unless time is already at 1 second or less
+          if (totalSeconds > 1) {
+            nextTimeFetchRef.current = setTimeout(
+              fetchTimeLeft,
+              nextFetchDelay
+            );
+          } else if (totalSeconds <= 1 && !celebrationComplete) {
+            // Set time to 0 to indicate hackathon is over
+            setTimeLeft(0);
+            setShowCountdown(false); // Ensure countdown is hidden
+            triggerCelebration();
+          }
+        } else if (response && typeof response.time_left_seconds === "number") {
+          // Alternative API format
+          const totalSeconds = Math.round(response.time_left_seconds);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 1);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            setShowCountdown(false);
+            triggerCelebration();
+          }
+        } else if (response && typeof response.time_left_minutes === "number") {
+          // Fallback for old API format (minutes)
+          const totalSeconds = Math.round(response.time_left_minutes * 60);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            triggerCelebration();
+          }
+        } else if (response && typeof response === "number") {
+          // Direct number response
+          const totalSeconds = Math.round(response);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            triggerCelebration();
+          }
+        } else {
+          if (response) {
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching time left:", error);
+      }
+    };
+
+    // Initial fetch
+    fetchTimeLeft();
+
+    // Clean up timeout on unmount
+    return () => {
+      if (nextTimeFetchRef.current) {
+        clearTimeout(nextTimeFetchRef.current);
+      }
+    };
+  }, [celebrationComplete, triggerCelebration]);
 
   // Fetch team data from API
   useEffect(() => {
@@ -305,60 +310,68 @@ export default function LeaderboardPage() {
         const response = await fetchData("get_points/", "POST", null);
 
         if (response && response.teams) {
-          // Store current team rankings before updating
-          const currentTeamsMap = new Map<number, Team>();
-          teams.forEach((team) => {
-            currentTeamsMap.set(team.id, { ...team });
+          // Use functional update to safely access previous state
+          setTeams(prevTeams => {
+            // Store previous team rankings based on prevTeams
+            const previousTeamsMap = new Map<number, Team>();
+            prevTeams.forEach((team) => {
+              previousTeamsMap.set(team.id, { ...team });
+            });
+            // Update the ref if it's used elsewhere, based on the state *before* this update
+            previousTeamsRef.current = previousTeamsMap;
+
+            // Transform API data into our Team interface format
+            interface ApiResponse {
+              teams: ApiTeam[];
+            }
+            interface ApiTeam {
+              id: number;
+              team_name: string;
+              score: number;
+              participants?: string[];
+            }
+
+            const transformedTeams: Team[] = (response as ApiResponse).teams.map(
+              (item: ApiTeam) => {
+                const previousTeam = previousTeamsMap.get(item.id);
+                return {
+                  id: item.id,
+                  name: item.team_name,
+                  points: item.score,
+                  members:
+                    item.participants && item.participants.length > 0
+                      ? item.participants
+                      : previousTeam?.members || // Use previous team data directly
+                        defaultMembers[
+                          Math.floor(Math.random() * defaultMembers.length)
+                        ] || ["Team Member"],
+                  rank: 0, // Will be updated after sorting
+                  previousRank: previousTeam?.rank, // Use previous team data directly
+                };
+              }
+            );
+
+            // Sort by points in descending order
+            const sortedTeams = transformedTeams.sort(
+              (a, b) => b.points - a.points
+            );
+
+            // Update ranks based on sorting
+            const teamsWithRanks = sortedTeams.map((team, idx) => ({
+              ...team,
+              rank: idx + 1,
+            }));
+
+            return teamsWithRanks; // Return the new state
           });
-          previousTeamsRef.current = currentTeamsMap;
 
-          // Transform API data into our Team interface format
-          interface ApiResponse {
-            teams: ApiTeam[];
-          }
-
-          interface ApiTeam {
-            id: number;
-            team_name: string;
-            score: number;
-            participants?: string[];
-          }
-
-          const transformedTeams: Team[] = (response as ApiResponse).teams.map(
-            (item: ApiTeam) => ({
-              id: item.id,
-              name: item.team_name,
-              points: item.score,
-              members:
-                item.participants && item.participants.length > 0
-                  ? item.participants
-                  : previousTeamsRef.current.get(item.id)?.members ||
-                    defaultMembers[
-                      Math.floor(Math.random() * defaultMembers.length)
-                    ] || ["Team Member"],
-              rank: 0, // Will be updated after sorting
-              previousRank: previousTeamsRef.current.get(item.id)?.rank,
-            })
-          );
-
-          // Sort by points in descending order
-          const sortedTeams = transformedTeams.sort(
-            (a, b) => b.points - a.points
-          );
-
-          // Update ranks based on sorting
-          const teamsWithRanks = sortedTeams.map((team, idx) => ({
-            ...team,
-            rank: idx + 1,
-          }));
-
-          setTeams(teamsWithRanks);
           setError(null);
           initialLoadCompleted.current = true;
         } else {
           throw new Error("Invalid response format from API");
         }
       } catch (error) {
+        console.error("Error fetching team data:", error);
         // Only show error if it's the first load
         if (!initialLoadCompleted.current) {
           setError("Failed to load leaderboard data");
