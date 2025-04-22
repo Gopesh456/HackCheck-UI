@@ -60,6 +60,10 @@ npm install
 This will install all the required packages defined in the `package.json` file.
 
 ## Quick Start (Recommended for Beginners)
+Requires **Node.js** (version 18 or higher).
+
+   - Download and install from [nodejs.org](https://nodejs.org/)
+   - Verify installation by running `node -v` in your terminal/command prompt
 
 If you are on Windows, simply double-click the `start.bat` file in the project folder. 
 For Linux/macOS users, simply double-click the `start.sh` script .
