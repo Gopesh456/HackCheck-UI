@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { fetchData } from "@/utils/api";
+import confetti from "canvas-confetti";
 
 interface Team {
   id: number;
@@ -73,6 +74,224 @@ export default function LeaderboardPage() {
   const [error, setError] = useState<string | null>(null);
   const previousTeamsRef = useRef<Map<number, Team>>(new Map());
   const initialLoadCompleted = useRef(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [celebrationComplete, setCelebrationComplete] = useState(false);
+  const nextTimeFetchRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch time left from API with smart timing
+  useEffect(() => {
+    const fetchTimeLeft = async () => {
+      try {
+        const response = await fetchData("get_time_left/", "POST", null);
+
+        // Handle the API response, which has format {time_left: 52.947691}
+        if (response && typeof response.time_left === "number") {
+          // API returns seconds directly as time_left
+          const totalSeconds = Math.round(response.time_left);
+
+          // Set the time left state
+          setTimeLeft(totalSeconds);
+
+          // Show countdown animation when 5 or fewer seconds remain (but hide at 1 sec)
+          const shouldShowCountdown = totalSeconds <= 5 && totalSeconds > 1;
+          setShowCountdown(shouldShowCountdown);
+
+          // Set next fetch time based on current seconds remaining
+          let nextFetchDelay = 10000; // Default: 10 seconds
+
+          if (totalSeconds <= 10) {
+            nextFetchDelay = 1000; // 1 second when under 10 seconds
+          } else if (totalSeconds <= 60) {
+            nextFetchDelay = 5000; // 5 seconds when under 60 seconds
+          } else if (totalSeconds <= 300) {
+            nextFetchDelay = 10000; // 10 seconds when under 5 minutes
+          } else {
+            nextFetchDelay = 30000; // 30 seconds for longer times
+          }
+
+          // Clear any existing timeout
+          if (nextTimeFetchRef.current) {
+            clearTimeout(nextTimeFetchRef.current);
+          }
+
+          // Schedule next fetch unless time is already at 1 second or less
+          if (totalSeconds > 1) {
+            nextTimeFetchRef.current = setTimeout(
+              fetchTimeLeft,
+              nextFetchDelay
+            );
+          } else if (totalSeconds <= 1 && !celebrationComplete) {
+            // Set time to 0 to indicate hackathon is over
+            setTimeLeft(0);
+            setShowCountdown(false); // Ensure countdown is hidden
+            triggerCelebration();
+          }
+        } else if (response && typeof response.time_left_seconds === "number") {
+          // Alternative API format
+          const totalSeconds = Math.round(response.time_left_seconds);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 1);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            setShowCountdown(false);
+            triggerCelebration();
+          }
+        } else if (response && typeof response.time_left_minutes === "number") {
+          // Fallback for old API format (minutes)
+          const totalSeconds = Math.round(response.time_left_minutes * 60);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            triggerCelebration();
+          }
+        } else if (response && typeof response === "number") {
+          // Direct number response
+          const totalSeconds = Math.round(response);
+          setTimeLeft(totalSeconds);
+          setShowCountdown(totalSeconds <= 5 && totalSeconds > 0);
+
+          // End hackathon at 1 second remaining
+          if (totalSeconds <= 1 && !celebrationComplete) {
+            setTimeLeft(0);
+            triggerCelebration();
+          }
+        } else {
+          if (response) {
+          }
+        }
+      } catch (error) {}
+    };
+
+    // Initial fetch
+    fetchTimeLeft();
+
+    // Clean up timeout on unmount
+    return () => {
+      if (nextTimeFetchRef.current) {
+        clearTimeout(nextTimeFetchRef.current);
+      }
+    };
+  }, [celebrationComplete]);
+
+  // Trigger celebration animations with more confetti
+  const triggerCelebration = () => {
+    if (celebrationComplete) return;
+
+    setCelebrationComplete(true);
+
+    // Global celebration effect - fireworks across the screen
+    triggerConfetti({
+      particleCount: 200,
+      spread: 150,
+      origin: { y: 0.7, x: 0.5 },
+      colors: [
+        "#FFD700",
+        "#FFDF00",
+        "#C0C0C0",
+        "#CD7F32",
+        "#FFC0CB",
+        "#00FFFF",
+      ],
+      startVelocity: 45,
+      gravity: 1.2,
+      drift: 0,
+      scalar: 1.2,
+    });
+
+    // Add side explosions
+    setTimeout(() => {
+      triggerConfetti({
+        particleCount: 100,
+        spread: 120,
+        origin: { y: 0.5, x: 0.1 },
+        colors: ["#FFD700", "#FFDF00", "#FFC0CB"],
+        startVelocity: 35,
+      });
+
+      triggerConfetti({
+        particleCount: 100,
+        spread: 120,
+        origin: { y: 0.5, x: 0.9 },
+        colors: ["#FFD700", "#FFDF00", "#FFC0CB"],
+        startVelocity: 35,
+      });
+    }, 500);
+
+    if (teams.length >= 1) {
+      // Gold celebration for 1st place - enhanced
+      setTimeout(() => {
+        triggerConfetti({
+          particleCount: 200,
+          spread: 70,
+          origin: { y: 0.5 },
+          colors: ["#FFD700", "#FFC800", "#FFDF00"],
+          shapes: ["star", "circle"],
+          ticks: 300,
+        });
+      }, 1000);
+    }
+
+    if (teams.length >= 2) {
+      // Silver celebration for 2nd place - enhanced
+      setTimeout(() => {
+        triggerConfetti({
+          particleCount: 150,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ["#C0C0C0", "#D3D3D3", "#A9A9A9"],
+          shapes: ["circle"],
+          ticks: 250,
+        });
+      }, 2000);
+    }
+
+    if (teams.length >= 3) {
+      // Bronze celebration for 3rd place - enhanced
+      setTimeout(() => {
+        triggerConfetti({
+          particleCount: 120,
+          spread: 50,
+          origin: { y: 0.7 },
+          colors: ["#CD7F32", "#B87333", "#A57164"],
+          shapes: ["circle"],
+          ticks: 200,
+        });
+      }, 3000);
+    }
+
+    // Final burst after all the others
+    setTimeout(() => {
+      triggerConfetti({
+        particleCount: 250,
+        spread: 180,
+        origin: { y: 0.5, x: 0.5 },
+        startVelocity: 45,
+        gravity: 0.8,
+        colors: [
+          "#FFD700",
+          "#C0C0C0",
+          "#CD7F32",
+          "#FFC0CB",
+          "#00FFFF",
+          "#FF00FF",
+        ],
+        ticks: 400,
+      });
+    }, 4000);
+  };
+
+  // Helper function for confetti
+  const triggerConfetti = (options: confetti.Options) => {
+    if (typeof window !== "undefined") {
+      confetti(options);
+    }
+  };
 
   // Fetch team data from API
   useEffect(() => {
@@ -105,20 +324,22 @@ export default function LeaderboardPage() {
             participants?: string[];
           }
 
-          const transformedTeams: Team[] = (response as ApiResponse).teams.map((item: ApiTeam) => ({
-            id: item.id,
-            name: item.team_name,
-            points: item.score,
-            members:
-              item.participants && item.participants.length > 0
-                ? item.participants
-                : previousTeamsRef.current.get(item.id)?.members ||
-                  defaultMembers[
-                    Math.floor(Math.random() * defaultMembers.length)
-                  ] || ["Team Member"],
-            rank: 0, // Will be updated after sorting
-            previousRank: previousTeamsRef.current.get(item.id)?.rank,
-          }));
+          const transformedTeams: Team[] = (response as ApiResponse).teams.map(
+            (item: ApiTeam) => ({
+              id: item.id,
+              name: item.team_name,
+              points: item.score,
+              members:
+                item.participants && item.participants.length > 0
+                  ? item.participants
+                  : previousTeamsRef.current.get(item.id)?.members ||
+                    defaultMembers[
+                      Math.floor(Math.random() * defaultMembers.length)
+                    ] || ["Team Member"],
+              rank: 0, // Will be updated after sorting
+              previousRank: previousTeamsRef.current.get(item.id)?.rank,
+            })
+          );
 
           // Sort by points in descending order
           const sortedTeams = transformedTeams.sort(
@@ -138,7 +359,6 @@ export default function LeaderboardPage() {
           throw new Error("Invalid response format from API");
         }
       } catch (error) {
-        console.error("Failed to fetch leaderboard data", error);
         // Only show error if it's the first load
         if (!initialLoadCompleted.current) {
           setError("Failed to load leaderboard data");
@@ -150,10 +370,10 @@ export default function LeaderboardPage() {
 
     fetchTeams();
 
-    // Refresh data every 30 seconds
+    // Refresh data every 5 seconds
     const interval = setInterval(fetchTeams, 5000);
     return () => clearInterval(interval);
-  }, [teams]);
+  }, []); // Remove teams dependency to prevent infinite loop
 
   const container = {
     hidden: { opacity: 0 },
@@ -227,7 +447,7 @@ export default function LeaderboardPage() {
     teams.length > 0 ? Math.max(...teams.map((team) => team.points), 0) : 100;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#0A0A0A] py-16 px-4 sm:px-6 lg:px-8 relative">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -264,43 +484,60 @@ export default function LeaderboardPage() {
             <AnimatePresence mode="popLayout">
               {teams.map((team, index) => {
                 const rankChange = getRankChangeInfo(team);
+                const isTopThree = index < 3 && timeLeft === 0;
+
                 return (
-                  <motion.div
-                    key={team.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 50,
-                        mass: 1,
-                      },
-                    }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.98,
-                      transition: { duration: 0.2 },
-                    }}
-                    className="relative group"
-                  >
+                  <motion.div key={team.id} layout className="relative group">
+                    {/* Winner highlight effect for top 3 when time hits zero */}
+                    {isTopThree && (
+                      <motion.div
+                        className={`absolute inset-0 rounded-xl opacity-30 -z-10 ${
+                          index === 0
+                            ? "bg-amber-600"
+                            : index === 1
+                            ? "bg-zinc-400"
+                            : "bg-amber-800"
+                        }`}
+                        initial={{ opacity: 0 }}
+                        animate={{
+                          opacity: [0.1, 0.3, 0.1],
+                          boxShadow: [
+                            index === 0
+                              ? "0 0 20px rgba(245, 158, 11, 0.4)"
+                              : index === 1
+                              ? "0 0 20px rgba(161, 161, 170, 0.4)"
+                              : "0 0 20px rgba(146, 64, 14, 0.4)",
+                            index === 0
+                              ? "0 0 40px rgba(245, 158, 11, 0.6)"
+                              : index === 1
+                              ? "0 0 40px rgba(161, 161, 170, 0.6)"
+                              : "0 0 40px rgba(146, 64, 14, 0.6)",
+                          ],
+                        }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      />
+                    )}
+
                     <motion.div
                       className="absolute inset-0 transform bg-gradient-to-r from-zinc-800/50 to-zinc-900/50 rounded-xl -skew-x-2"
                       layout
                     />
+
                     <motion.div
                       layout
-                      className={`relative p-8 transition-all duration-300 border bg-zinc-900/90 backdrop-blur-xl rounded-xl 
-                        ${
-                          team.previousRank && team.previousRank !== team.rank
-                            ? team.rank < team.previousRank
-                              ? "border-green-500/30 shadow-sm shadow-green-500/20"
-                              : "border-red-500/30 shadow-sm shadow-red-500/20"
-                            : "border-zinc-800/50"
-                        } 
-                        group-hover:border-zinc-700/50`}
+                      className={`relative p-8 transition-all duration-300 border bg-zinc-900/90 backdrop-blur-xl rounded-xl ${
+                        team.previousRank && team.previousRank !== team.rank
+                          ? team.rank < team.previousRank
+                            ? "border-green-500/30 shadow-sm shadow-green-500/20"
+                            : "border-red-500/30 shadow-sm shadow-red-500/20"
+                          : isTopThree
+                          ? index === 0
+                            ? "border-amber-500/50 shadow-lg shadow-amber-500/20"
+                            : index === 1
+                            ? "border-zinc-400/50 shadow-lg shadow-zinc-400/20"
+                            : "border-amber-700/50 shadow-lg shadow-amber-700/20"
+                          : "border-zinc-800/50"
+                      } group-hover:border-zinc-700/50`}
                       animate={
                         team.previousRank && team.previousRank !== team.rank
                           ? {
@@ -372,11 +609,7 @@ export default function LeaderboardPage() {
                                       0
                                     )}%`,
                             }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 30,
-                            }}
+                            transition={{ duration: 0.8, type: "spring" }}
                             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500"
                           />
                         </div>
@@ -392,11 +625,7 @@ export default function LeaderboardPage() {
                                   )}%`,
                             opacity: 0.15,
                           }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 30,
-                          }}
+                          transition={{ duration: 3 }}
                           className="absolute top-0 h-1.5 rounded-full bg-amber-400 blur-sm"
                         />
                       </div>
@@ -405,6 +634,68 @@ export default function LeaderboardPage() {
                 );
               })}
             </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Countdown Timer Overlay - Only shows when timer is between 5 and 2 seconds */}
+        {showCountdown &&
+          timeLeft !== null &&
+          timeLeft <= 5 &&
+          timeLeft > 1 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              transition={{ duration: 0.5 }}
+              className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+              style={{ pointerEvents: "none" }}
+            >
+              <div className="text-center px-12 py-8 rounded-xl bg-black/70 backdrop-blur-md border border-amber-500/30 bg-opacity-75">
+                <motion.div
+                  className="text-7xl font-bold text-amber-500 font-mono"
+                  animate={{
+                    textShadow: [
+                      "0 0 10px rgba(245, 158, 11, 0.7)",
+                      "0 0 20px rgba(245, 158, 11, 0.9)",
+                      "0 0 10px rgba(245, 158, 11, 0.7)",
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {timeLeft}s
+                </motion.div>
+                <p className="text-zinc-300 mt-2 text-xl">Time Remaining</p>
+              </div>
+            </motion.div>
+          )}
+
+        {/* Winner Celebration Banner */}
+        {timeLeft === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            transition={{ duration: 0.8, type: "spring" }}
+            className="fixed top-0 left-0 right-0 z-50 text-center pt-6 pb-8 px-4"
+          >
+            <motion.div
+              className="inline-block py-4 px-8 rounded-xl bg-gradient-to-r from-amber-900/80 via-amber-600/80 to-amber-900/80 backdrop-blur-md border border-amber-400/50 shadow-2xl"
+              animate={{
+                boxShadow: [
+                  "0 0 30px rgba(245, 158, 11, 0.4)",
+                  "0 0 60px rgba(245, 158, 11, 0.6)",
+                  "0 0 30px rgba(245, 158, 11, 0.4)",
+                ],
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              <h2 className="text-4xl font-bold text-amber-100 mb-1">
+                Hackathon Complete!
+              </h2>
+              <p className="text-xl text-amber-200/80">
+                Congratulations to all winners!
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </div>
