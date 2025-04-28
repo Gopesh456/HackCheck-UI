@@ -311,7 +311,7 @@ export default function LeaderboardPage() {
 
         if (response && response.teams) {
           // Use functional update to safely access previous state
-          setTeams(prevTeams => {
+          setTeams((prevTeams) => {
             // Store previous team rankings based on prevTeams
             const previousTeamsMap = new Map<number, Team>();
             prevTeams.forEach((team) => {
@@ -331,25 +331,25 @@ export default function LeaderboardPage() {
               participants?: string[];
             }
 
-            const transformedTeams: Team[] = (response as ApiResponse).teams.map(
-              (item: ApiTeam) => {
-                const previousTeam = previousTeamsMap.get(item.id);
-                return {
-                  id: item.id,
-                  name: item.team_name,
-                  points: item.score,
-                  members:
-                    item.participants && item.participants.length > 0
-                      ? item.participants
-                      : previousTeam?.members || // Use previous team data directly
-                        defaultMembers[
-                          Math.floor(Math.random() * defaultMembers.length)
-                        ] || ["Team Member"],
-                  rank: 0, // Will be updated after sorting
-                  previousRank: previousTeam?.rank, // Use previous team data directly
-                };
-              }
-            );
+            const transformedTeams: Team[] = (
+              response as ApiResponse
+            ).teams.map((item: ApiTeam) => {
+              const previousTeam = previousTeamsMap.get(item.id);
+              return {
+                id: item.id,
+                name: item.team_name,
+                points: item.score,
+                members:
+                  item.participants && item.participants.length > 0
+                    ? item.participants
+                    : previousTeam?.members || // Use previous team data directly
+                      defaultMembers[
+                        Math.floor(Math.random() * defaultMembers.length)
+                      ] || ["Team Member"],
+                rank: 0, // Will be updated after sorting
+                previousRank: previousTeam?.rank, // Use previous team data directly
+              };
+            });
 
             // Sort by points in descending order
             const sortedTeams = transformedTeams.sort(
@@ -703,7 +703,7 @@ export default function LeaderboardPage() {
               transition={{ duration: 3, repeat: Infinity }}
             >
               <h2 className="text-4xl font-bold text-amber-100 mb-1">
-                Hackathon Complete!
+                Round 1 Complete!
               </h2>
               <p className="text-xl text-amber-200/80">
                 Congratulations to all winners!
