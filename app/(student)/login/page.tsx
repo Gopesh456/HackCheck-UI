@@ -1,9 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useState,
-  useRef,
-} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { fetchData } from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -125,8 +121,8 @@ export default function Login() {
 
   // Calculate pupil movement based on vector from eye to cursor
   const calculatePupilTransform = (
-    eyePosition: { x: number; y: number; },
-    mousePosition: { x: number; y: number; },
+    eyePosition: { x: number; y: number },
+    mousePosition: { x: number; y: number },
     maxDistance = 10
   ) => {
     const deltaX = mousePosition.x - eyePosition.x;
@@ -201,8 +197,8 @@ export default function Login() {
 
       // Successful login
       Cookies.set("token", response.token, {
-        secure: true,
-        sameSite: "strict",
+        // secure: true,
+        sameSite: "lax",
         expires: 1, // expires in 1 day
       });
       if (response.error) {

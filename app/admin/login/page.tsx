@@ -204,7 +204,7 @@ export default function Login() {
 
       // Handle successful login
       if (response.token) {
-        Cookies.set("token", response.token, { expires: 1 }); // Expires in 1 day
+        Cookies.set("token", response.token, { expires: 1, sameSite: "lax" }); // Expires in 1 day
         router.push("/admin/dashboard"); // Redirect to admin dashboard
       } else if (response.error) {
         setErrorMessage(response.error);
