@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 
-const API_BASE_URL = "http://0.0.0.0:8000/";
+const API_BASE_URL = "http://192.168.68.54:8000/";
 
 const fetchData = async (
   endpoint,
