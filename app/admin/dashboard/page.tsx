@@ -6,6 +6,7 @@ import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigationWithLoading } from "@/utils/navigation";
 
 export default function AdminDashboard() {
+  const exportURL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { setIsLoading } = useLoading();
   const { navigateTo } = useNavigationWithLoading();
   const [websiteActive, setWebsiteActive] = useState<boolean>(false);
@@ -501,7 +502,7 @@ export default function AdminDashboard() {
           <a
             className="flex justify-center p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
             download="leaderboard.csv"
-            href="https://hackcheckapi.leapcell.app/export_leaderboard/"
+            href={`${exportURL}export_leaderboard/`}
           >
             <button onClick={handleExportResults}>Export Results</button>
           </a>

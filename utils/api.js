@@ -1,7 +1,6 @@
 import Cookies from "js-cookie";
 
-const API_BASE_URL = "http://192.168.68.54:8000/";
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const fetchData = async (
   endpoint,
   method = "GET",

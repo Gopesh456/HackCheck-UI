@@ -856,7 +856,7 @@ def eval_arithmetic(expr):
           minSize={20}
           className={`${fullscreen ? "hidden" : ""}`}
         >
-          <div className="h-[90vh] p-6 prose prose-invert max-w-none overflow-y-auto">
+          <div className="h-[83vh] p-6 prose prose-invert max-w-none overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-xl">Loading question...</div>
