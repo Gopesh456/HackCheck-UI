@@ -60,12 +60,13 @@ npm install
 This will install all the required packages defined in the `package.json` file.
 
 ## Quick Start (Recommended for Beginners)
+
 Requires **Node.js** (version 18 or higher).
 
-   - Download and install from [nodejs.org](https://nodejs.org/)
-   - Verify installation by running `node -v` in your terminal/command prompt
+- Download and install from [nodejs.org](https://nodejs.org/)
+- Verify installation by running `node -v` in your terminal/command prompt
 
-If you are on Windows, simply double-click the `start.bat` file in the project folder. 
+If you are on Windows, simply double-click the `start.bat` file in the project folder.
 For Linux/macOS users, simply double-click the `start.sh` script .
 This script will:
 
@@ -309,10 +310,66 @@ The production version will be optimized for better performance.
 - **Loader**
   - A loading indicator component used to show loading states.
 
-
-
-
 ## Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
 - [Learn Next.js](https://nextjs.org/learn) - Interactive Next.js tutorial
+
+# HackCheck-UI
+
+This repository contains the user interface for the HackCheck application, designed to be user-friendly and accessible even for users with no coding experience.
+
+## Getting Started
+
+We've created easy-to-use setup scripts that will handle all the technical details for you.
+
+### For Windows Users (start.bat)
+
+1. Double-click the `start.bat` file in the main folder
+2. The script will:
+   - Check if Node.js is installed and guide you through installation if needed
+   - Set up the connection to the backend API (you'll be prompted for the URL)
+   - Install all required dependencies automatically
+   - Build the application
+   - Start the server
+
+The improved Windows script features:
+
+- Color-coded output for better readability
+- Clear step-by-step progress indicators
+- Detailed error messages with suggested solutions
+- Option to keep or change existing configuration
+- Beginner-friendly instructions throughout the process
+
+### For Mac/Linux Users (start.sh)
+
+1. Open Terminal in the project directory
+2. Make the script executable with: `chmod +x start.sh`
+3. Run the script: `./start.sh`
+4. Follow the on-screen prompts
+
+## Requirements
+
+- Node.js (the script will check for this and guide you through installation)
+- Internet connection (to download dependencies)
+- Backend API server running (you'll need to know the URL)
+
+## Troubleshooting
+
+If you encounter issues when running the scripts:
+
+### Windows Issues
+
+- **"Node.js not found"**: Follow the link provided in the error message to download and install Node.js
+- **Installation failures**: Try running the script as administrator (right-click, "Run as administrator")
+- **Build errors**: Ensure your backend URL is correct and your internet connection is stable
+
+### Mac/Linux Issues
+
+- **Permission denied**: Run `chmod +x start.sh` to make the script executable
+- **Node.js not found**: Follow the installation instructions shown in the terminal
+- **Installation failures**: Try running with sudo: `sudo ./start.sh`
+
+## Configuration
+
+The scripts create a `.env` file with your backend API URL. If you need to change this later, simply run the script again and choose the option to enter a new URL.
