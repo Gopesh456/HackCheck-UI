@@ -22,7 +22,9 @@ export default function AdminDashboard() {
   // State for system settings modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [scoreSettings, setScoreSettings] = useState({
-    max_score: 300,
+    easy_max_score: 200,
+    medium_max_score: 300,
+    hard_max_score: 400,
     score_decrement_interval_seconds: 600,
     score_decrement_per_interval: 10,
   });
@@ -87,8 +89,11 @@ export default function AdminDashboard() {
   const getDashboardData = useCallback(async () => {
     try {
       const data = await fetchData("dashboard/", "POST", null, false, false);
-
       // Handle hackathon status
+      if (data.hackathon_status === undefined) {
+        // console.log("not admin");
+        navigateTo("/admin/login");
+      }
       if (data.hackathon_status !== undefined) {
         setWebsiteActive(data.hackathon_status);
       }
@@ -111,8 +116,8 @@ export default function AdminDashboard() {
           setTimerRunning(data.hackathon_status);
         }
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (e) {
+      console.error("Error:", e);
     }
   }, [updateRemainingTimeFromSeconds]);
 
@@ -266,7 +271,9 @@ export default function AdminDashboard() {
       const response = await fetchData("get_score_settings/", "POST", null);
       if (response) {
         setScoreSettings({
-          max_score: response.max_score,
+          easy_max_score: response.easy_max_score,
+          medium_max_score: response.medium_max_score,
+          hard_max_score: response.hard_max_score,
           score_decrement_interval_seconds:
             response.score_decrement_interval_seconds,
           score_decrement_per_interval: response.score_decrement_per_interval,
@@ -563,16 +570,50 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 <div>
                   <label className="block mb-1 text-gray-300">
-                    Maximum Score
+                    Easy Question Max Score
                   </label>
                   <input
                     type="number"
                     min="0"
-                    value={scoreSettings.max_score}
+                    value={scoreSettings.easy_max_score}
                     onChange={(e) =>
                       setScoreSettings({
                         ...scoreSettings,
-                        max_score: parseInt(e.target.value) || 0,
+                        easy_max_score: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-gray-300">
+                    Medium Question Max Score
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={scoreSettings.medium_max_score}
+                    onChange={(e) =>
+                      setScoreSettings({
+                        ...scoreSettings,
+                        medium_max_score: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-600 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-gray-300">
+                    Hard Question Max Score
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={scoreSettings.hard_max_score}
+                    onChange={(e) =>
+                      setScoreSettings({
+                        ...scoreSettings,
+                        hard_max_score: parseInt(e.target.value) || 0,
                       })
                     }
                     className="w-full px-3 py-2 bg-gray-600 rounded"

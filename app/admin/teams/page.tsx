@@ -31,6 +31,10 @@ export default function TeamsManagement() {
         try {
           // Fetch teams data
           const response = await fetchData("get_teams/", "POST", null);
+          if (response.id === undefined) {
+            // console.log("not admin");
+            window.location.href = "/admin/login";
+          }
           if (response && response.teams) {
             setTeams(response.teams);
           }
@@ -73,7 +77,11 @@ export default function TeamsManagement() {
     setIsAdding(true);
     setError(""); // Clear previous errors
     try {
-      const addedTeam: AddTeamResponse = await fetchData("register/", "POST", newTeam);
+      const addedTeam: AddTeamResponse = await fetchData(
+        "register/",
+        "POST",
+        newTeam
+      );
       setTeams([...teams, addedTeam]);
       setNewTeam({ team_name: "", password: "" });
       window.location.reload();
@@ -87,7 +95,11 @@ export default function TeamsManagement() {
       };
 
       const typedError = error as ErrorResponse;
-      if (error instanceof Error && typedError.response && typedError.response.error) {
+      if (
+        error instanceof Error &&
+        typedError.response &&
+        typedError.response.error
+      ) {
         setError(typedError.response.error);
       } else {
         setError("Failed to add team. Please try again.");

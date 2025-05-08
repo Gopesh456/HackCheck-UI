@@ -25,20 +25,27 @@ export default function QuestionsManagementPage() {
 
   // Load questions on component mount
   useEffect(() => {
-    loadQuestions();
-  }, []);
+    const checkAdmin = async () => {
+      const res = await fetchData("is_admin/", "POST", null, false, false);
+      if (res.is_admin == true) {
+        loadQuestions();
+      } else {
+        window.location.href = "/admin/login";
+      }
+    };
 
+    checkAdmin();
+  }, []);
   // Load questions from API
   const loadQuestions = async () => {
     setLoading(true);
+
     try {
-      const response = await fetchData(
-        "get_questions/",
-        "POST",
-        null,
-        false,
-        false
-      );
+      const response = await fetchData("get_questions/", "POST", null, false,false);
+      if (response.questions === undefined) {
+        // console.log("not admin");
+        window.location.href = "/admin/login";
+      }
 
       if (response && response.questions) {
         setApiQuestions(response.questions);

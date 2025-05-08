@@ -68,8 +68,6 @@ if exist .env (
     echo.
     set /p api_url="Enter your backend API URL: "
     
-    REM Remove trailing slash if present
-    if "!api_url:~-1!"=="/" set api_url=!api_url:~0,-1!
     
     REM Add quotes to handle special characters properly
     echo NEXT_PUBLIC_API_BASE_URL="!api_url!"> .env
