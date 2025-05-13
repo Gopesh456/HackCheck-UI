@@ -31,10 +31,6 @@ export default function TeamsManagement() {
         try {
           // Fetch teams data
           const response = await fetchData("get_teams/", "POST", null);
-          if (response.id === undefined) {
-            // console.log("not admin");
-            window.location.href = "/admin/login";
-          }
           if (response && response.teams) {
             setTeams(response.teams);
           }
@@ -45,6 +41,7 @@ export default function TeamsManagement() {
         }
       } else {
         setLoading(false);
+        window.location.href = "/admin/login";
       }
 
       // Auth check is complete
