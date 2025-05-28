@@ -191,9 +191,9 @@ const Dashboard = () => {
       variants={pageVariants}
     >
       <Navbar />
-      <div className="bg-[#121418] text-white p-5 h-full dark px-30">
+      <div className="bg-[#121418] text-white p-3 sm:p-5 h-full dark px-4 sm:px-8 md:px-16 lg:px-30">
         <motion.div
-          className="pl-3 text-4xl font-bold border-l-4 dark:text-white border-l-white"
+          className="pl-3 text-2xl sm:text-3xl md:text-4xl font-bold border-l-4 dark:text-white border-l-white"
           variants={headerVariants}
         >
           Hackathon Questions
@@ -237,33 +237,35 @@ const Dashboard = () => {
               {questions.map((question, index) => (
                 <motion.div
                   key={index}
-                  className="bg-[#1F202A] rounded-lg p-5 mb-5 shadow-lg flex items-center justify-between"
+                  className="bg-[#1F202A] rounded-lg p-4 sm:p-5 mb-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between"
                   variants={itemVariants}
                   whileHover="hover"
                   layout
                 >
-                  <div>
-                    <div className="text-2xl font-bold dark:text-white">
+                  <div className="mb-4 sm:mb-0">
+                    <div className="text-xl sm:text-2xl font-bold dark:text-white">
                       {question.title}
                     </div>
-                    <span
-                      className={`mt-2 text-sm ${
-                        question.difficulty.toLowerCase() === "easy"
-                          ? "text-[#23D05E]"
-                          : question.difficulty.toLowerCase() === "medium"
-                          ? "text-[#D05537]"
-                          : question.difficulty.toLowerCase() === "expert"
-                          ? "text-[#CB3B3F]"
-                          : ""
-                      }`}
-                    >
-                      {question.difficulty} &nbsp;
-                    </span>
-                    <span className="mt-2 text-sm ">
-                      <span> Score: {question.Score}</span>
-                      <span className="ml-4">Status:</span>
+                    <div className="mt-2 flex flex-wrap gap-2 text-sm">
                       <span
-                        className={`mt-2 text-sm ${
+                        className={`${
+                          question.difficulty.toLowerCase() === "easy"
+                            ? "text-[#23D05E]"
+                            : question.difficulty.toLowerCase() === "medium"
+                            ? "text-[#D05537]"
+                            : question.difficulty.toLowerCase() === "expert"
+                            ? "text-[#CB3B3F]"
+                            : ""
+                        }`}
+                      >
+                        {question.difficulty}
+                      </span>
+                      <span className="mx-2">•</span>
+                      <span> Score: {question.Score}</span>
+                      <span className="mx-2">•</span>
+                      <span>Status:</span>
+                      <span
+                        className={`${
                           question.Status.toLowerCase() === "correct"
                             ? "text-[#23D05E]"
                             : question.Status.toLowerCase() === "incorrect"
@@ -276,7 +278,7 @@ const Dashboard = () => {
                         {" "}
                         {question.Status}
                       </span>
-                    </span>
+                    </div>
                   </div>
                   <motion.button
                     onClick={() => handleSolveChallenge(question.number)}
@@ -284,7 +286,7 @@ const Dashboard = () => {
                       loadingQuestion === question.number ||
                       question.Status.toLowerCase() === "correct"
                     }
-                    className={`text-white border rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ${
+                    className={`text-white border rounded-lg text-sm px-4 sm:px-5 py-2 sm:py-2.5 text-center w-full sm:w-auto ${
                       question.Status.toLowerCase() === "correct"
                         ? "border-white cursor-default"
                         : "border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"

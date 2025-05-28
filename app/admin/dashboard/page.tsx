@@ -323,20 +323,26 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen p-8 text-white bg-gray-900">
-      <header className="mb-10">
-        <h1 className="mb-2 text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-gray-400">Manage your hackathon platform</p>
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 text-white bg-gray-900">
+      <header className="mb-6 sm:mb-10">
+        <h1 className="mb-1 sm:mb-2 text-2xl sm:text-3xl font-bold">
+          Admin Dashboard
+        </h1>
+        <p className="text-sm sm:text-base text-gray-400">
+          Manage your hackathon platform
+        </p>
       </header>
 
       {/* Status Panel */}
-      <div className="grid grid-cols-1 gap-6 mb-10 md:grid-cols-2 lg:grid-cols-4">
-        <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
-          <h2 className="mb-4 text-xl font-semibold">Platform Status</h2>
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="p-4 sm:p-6 bg-gray-800 rounded-lg shadow-lg">
+          <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">
+            Platform Status
+          </h2>
           <div className="flex items-center justify-between">
-            <span className="flex items-center">
+            <span className="flex items-center text-sm sm:text-base">
               <span
-                className={`w-3 h-3 rounded-full mr-2 ${
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2 ${
                   websiteActive ? "bg-green-500" : "bg-red-500"
                 }`}
               ></span>
@@ -344,7 +350,7 @@ export default function AdminDashboard() {
             </span>
             <button
               onClick={toggleWebsiteStatus}
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md ${
                 websiteActive
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-green-600 hover:bg-green-700"
@@ -355,26 +361,32 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
-          <h2 className="mb-4 text-xl font-semibold">Quick Stats</h2>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 sm:p-6 bg-gray-800 rounded-lg shadow-lg">
+          <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">
+            Quick Stats
+          </h2>
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <p className="text-gray-400">Teams</p>
-              <p className="text-2xl">{nTeams}</p>
+              <p className="text-xs sm:text-sm text-gray-400">Teams</p>
+              <p className="text-xl sm:text-2xl">{nTeams}</p>
             </div>
             <div>
-              <p className="text-gray-400">Questions</p>
-              <p className="text-2xl">{nQuestions}</p>
+              <p className="text-xs sm:text-sm text-gray-400">Questions</p>
+              <p className="text-xl sm:text-2xl">{nQuestions}</p>
             </div>
           </div>
         </div>
 
-        <div className="col-span-1 p-6 bg-gray-800 rounded-lg shadow-lg md:col-span-2">
-          <h2 className="mb-4 text-xl font-semibold">Set Competition Time</h2>
+        <div className="col-span-1 p-4 sm:p-6 bg-gray-800 rounded-lg shadow-lg sm:col-span-2">
+          <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">
+            Set Competition Time
+          </h2>
           <div className="flex flex-col space-y-4">
-            <div className="flex space-x-4">
-              <div>
-                <label className="block text-sm text-gray-400">Hours</label>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
+              <div className="w-full sm:w-auto">
+                <label className="block text-xs sm:text-sm text-gray-400">
+                  Hours
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -383,11 +395,13 @@ export default function AdminDashboard() {
                   onChange={(e) =>
                     handleTimerChange("hours", parseInt(e.target.value) || 0)
                   }
-                  className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-20 px-2 sm:px-3 py-1.5 sm:py-2 text-sm bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm text-gray-400">Minutes</label>
+              <div className="w-full sm:w-auto">
+                <label className="block text-xs sm:text-sm text-gray-400">
+                  Minutes
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -396,29 +410,29 @@ export default function AdminDashboard() {
                   onChange={(e) =>
                     handleTimerChange("minutes", parseInt(e.target.value) || 0)
                   }
-                  className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-20 px-2 sm:px-3 py-1.5 sm:py-2 text-sm bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             <button
               onClick={saveTimer}
-              className="px-4 py-2 transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
             >
               Save Time
             </button>
 
             {/* Running Timer Display */}
-            <div className="p-4 mt-4 bg-gray-700 rounded-lg">
-              <h3 className="mb-2 text-lg text-center text-gray-300">
+            <div className="p-3 sm:p-4 mt-3 sm:mt-4 bg-gray-700 rounded-lg">
+              <h3 className="mb-2 text-sm sm:text-lg text-center text-gray-300">
                 Running Competition Timer
               </h3>
-              <div className="font-mono text-4xl text-center">
+              <div className="font-mono text-2xl sm:text-4xl text-center">
                 {String(remainingTime.hours).padStart(2, "0")}:
                 {String(remainingTime.minutes).padStart(2, "0")}:
                 {String(Math.floor(remainingTime.seconds)).padStart(2, "0")}
               </div>
-              <p className="mt-2 text-sm text-center text-gray-400">
+              <p className="mt-2 text-xs sm:text-sm text-center text-gray-400">
                 {timerRunning ? "Timer is running" : "Timer is paused"}
               </p>
             </div>
@@ -427,7 +441,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Management Panels */}
-      <div className="grid grid-cols-1 gap-6 mb-10 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-10 sm:grid-cols-2 md:grid-cols-3">
         <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
           <h2 className="mb-4 text-xl font-semibold">Team Management</h2>
           <p className="mb-4 text-gray-400">
@@ -503,18 +517,20 @@ export default function AdminDashboard() {
       </div>
 
       {/* Other Controls */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-lg">
-        <h2 className="mb-4 text-xl font-semibold">Advanced Controls</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="p-4 sm:p-6 bg-gray-800 rounded-lg shadow-lg">
+        <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">
+          Advanced Controls
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
           <a
-            className="flex justify-center p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+            className="flex justify-center p-3 sm:p-4 text-sm transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
             download="leaderboard.csv"
             href={`${exportURL}export_leaderboard/`}
           >
             <button onClick={handleExportResults}>Export Results</button>
           </a>
           <button
-            className="p-4 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+            className="p-3 sm:p-4 text-sm transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
             onClick={openSettingsModal}
           >
             System Settings
@@ -522,19 +538,19 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* System Settings Modal */}
+      {/* System Settings Modal - needs responsive adjustments */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-2xl p-6 bg-gray-800 rounded-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">System Settings</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-lg sm:max-w-2xl p-4 sm:p-6 bg-gray-800 rounded-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">System Settings</h2>
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className="p-2 text-white bg-red-600 rounded-full hover:bg-red-700"
+                className="p-1.5 sm:p-2 text-white bg-red-600 rounded-full hover:bg-red-700"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

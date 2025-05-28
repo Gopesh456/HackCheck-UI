@@ -26,12 +26,12 @@ const developers = [
 function CreditPage() {
   return (
     <div>
-      <StarryBackground className="flex flex-col items-center justify-center min-h-screen p-8 text-white">
+      <StarryBackground className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 text-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="mb-16 text-center"
+          className="mb-10 sm:mb-16 text-center"
         >
           <TypewriterHero
             title="Thank You"
@@ -43,42 +43,48 @@ function CreditPage() {
           />
         </motion.div>
         <div className="flex justify-center w-full">
-          <div className="grid w-full max-w-6xl gap-8 md:grid-cols-2 ">
+          <div className="grid w-full max-w-6xl gap-4 sm:gap-8 grid-cols-1 md:grid-cols-2">
             {developers.map((dev, index) => (
               <HolographicCard
                 key={index}
-                className="p-8 rounded-xl"
+                className="p-4 sm:p-8 rounded-xl"
                 backgroundColor="#0D0D17"
                 darkBackgroundColor="#0A0A14"
                 depthEffect={true}
                 glowIntensity={1.2}
                 shadowColor="rgba(16, 185, 129, 0.25)"
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#DAA520]">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#DAA520]">
                       {dev.name}
                     </h2>
-                    <p className="text-gray-400">{dev.role}</p>
+                    <p className="text-xs sm:text-sm text-gray-400">
+                      {dev.role}
+                    </p>
                   </div>
                   <motion.div
                     whileHover={{ scale: 1.1, rotate: 360 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Code2 className="w-8 h-8 text-[#DAA520]" />
+                    <Code2 className="w-6 h-6 sm:w-8 sm:h-8 text-[#DAA520]" />
                   </motion.div>
                 </div>
-                <p className="mb-6 text-gray-300">{dev.description}</p>
+                <p className="mb-4 sm:mb-6 text-sm sm:text-base text-gray-300">
+                  {dev.description}
+                </p>
                 <motion.a
                   href={dev.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 transition-colors duration-300 rounded-lg bg-[#303039] hover:bg-[#DAA520]/10"
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 transition-colors duration-300 rounded-lg bg-[#303039] hover:bg-[#DAA520]/10"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Github className="w-5 h-5 text-white" />
-                  <span className="text-white">GitHub Profile</span>
+                  <Github className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <span className="text-sm sm:text-base text-white">
+                    GitHub Profile
+                  </span>
                 </motion.a>
               </HolographicCard>
             ))}
@@ -89,14 +95,14 @@ function CreditPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-16 text-center"
+          className="mt-10 sm:mt-16 text-center"
         >
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="inline-flex items-center gap-2 text-[#DAA520]"
+            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#DAA520]"
           >
-            <Heart className="w-6 h-6" />
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
             <span>Made with rigor and passion</span>
           </motion.div>
         </motion.footer>

@@ -274,7 +274,7 @@ export default function Login() {
 
   return (
     <main className="relative">
-      <div className="relative min-h-screen flex items-center justify-center bg-[#04080A]">
+      <div className="relative min-h-screen flex items-center justify-center bg-[#04080A] px-4">
         {/* Video background - centered and 50% size */}
         <div className="absolute w-full h-full transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
           <video
@@ -301,8 +301,8 @@ export default function Login() {
           ref={dotRef}
         ></div>
 
-        <div className="relative z-10 flex flex-col w-full max-w-[275px] px-1 py-1 mx-auto bg-transparent rounded-3xl backdrop-blur-md sm:justify-center sm:py-2 md:flex-none md:px-2 lg:py-3 lg:px-3 xl:py-4 xl:px-4">
-          <div className="w-full rounded-[50px] flex flex-col items-center justify-center h-full">
+        <div className="relative z-10 flex flex-col w-full max-w-[275px] sm:max-w-[300px] px-1 py-1 mx-auto bg-transparent rounded-3xl backdrop-blur-md sm:justify-center sm:py-2 md:flex-none md:px-2 lg:py-3 lg:px-3 xl:py-4 xl:px-4">
+          <div className="w-full rounded-[50px] flex flex-col items-center justify-center h-full p-3 sm:p-4">
             <div className="mb-6 eyes-container">
               <div
                 className={`eye ${
@@ -342,16 +342,16 @@ export default function Login() {
               </div>
             </div>
 
-            <h2 className="mb-2 text-3xl font-bold text-center text-white">
+            <h2 className="mb-2 text-2xl sm:text-3xl font-bold text-center text-white">
               Sign in
             </h2>
-            <p className="mb-6 text-center text-[#CBD5E0]">
+            <p className="mb-6 text-sm sm:text-base text-center text-[#CBD5E0]">
               Welcome to{" "}
               <a href="#" className="text-[#CBD5E0]">
                 Admin Portal
               </a>
             </p>
-            <form onSubmit={handleSubmit(login)} noValidate>
+            <form onSubmit={handleSubmit(login)} noValidate className="w-full">
               <div className="relative mb-4">
                 <input
                   {...register("username", {
@@ -455,7 +455,7 @@ export default function Login() {
                 {isLoading ? (
                   <span className="flex items-center justify-center">
                     <svg
-                      className="w-5 h-5 mr-2 animate-spin"
+                      className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin"
                       viewBox="0 0 24 24"
                     >
                       <circle
@@ -492,8 +492,12 @@ export default function Login() {
           }
           .eye {
             border-radius: 50%;
-            height: 60px;
-            width: 60px;
+            height: 50px;
+            width: 50px;
+            @media (min-width: 640px) {
+              height: 60px;
+              width: 60px;
+            }
             background-color: #f3efef;
             position: relative;
             overflow: hidden;
@@ -508,8 +512,12 @@ export default function Login() {
             position: absolute;
             background-color: #382e25;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
+            @media (min-width: 640px) {
+              width: 20px;
+              height: 20px;
+            }
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);

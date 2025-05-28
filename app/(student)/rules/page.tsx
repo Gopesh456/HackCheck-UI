@@ -27,11 +27,11 @@ function RuleCard({
 }) {
   return (
     <div
-      className={`bg-gray-800 rounded-xl p-6 ${delay} hover:bg-gray-700 transition-all duration-300`}
+      className={`bg-gray-800 rounded-xl p-4 sm:p-6 ${delay} hover:bg-gray-700 transition-all duration-300`}
     >
-      <Icon className="w-8 h-8 mb-4 text-amber-400" />
-      <h3 className="mb-2 text-xl font-bold text-white">{title}</h3>
-      <p className="text-gray-400">{description}</p>
+      <Icon className="w-6 h-6 sm:w-8 sm:h-8 mb-3 sm:mb-4 text-amber-400" />
+      <h3 className="mb-2 text-lg sm:text-xl font-bold text-white">{title}</h3>
+      <p className="text-sm sm:text-base text-gray-400">{description}</p>
     </div>
   );
 }
@@ -63,12 +63,12 @@ function RulesPage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 to-yellow-900/20" />
-        <div className="px-4 pt-20 pb-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="px-4 pt-16 sm:pt-20 pb-12 sm:pb-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="mb-6 text-5xl font-bold text-transparent md:text-6xl fade-in bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300">
+            <h1 className="mb-4 sm:mb-6 text-3xl sm:text-5xl md:text-6xl font-bold text-transparent fade-in bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300">
               Hackathon Rules
             </h1>
-            <p className="max-w-2xl mx-auto text-xl text-gray-400 fade-in-delay-1">
+            <p className="max-w-2xl mx-auto text-base sm:text-xl text-gray-400 fade-in-delay-1">
               Welcome to our hackathon! Get ready to innovate, collaborate, and
               create something amazing.
             </p>
@@ -77,8 +77,8 @@ function RulesPage() {
       </div>
 
       {/* Rules Grid */}
-      <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="px-4 py-10 sm:py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               icon: WifiOff,
@@ -135,17 +135,17 @@ function RulesPage() {
       </div>
 
       {/* CTA Button */}
-      <div className="pb-20 text-center">
+      <div className="pb-12 sm:pb-20 text-center">
         <button
-          className="px-8 py-4 font-bold text-gray-900 transition-all duration-300 transform rounded-full shadow-lg group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 hover:scale-105 hover:shadow-xl animate-float"
-          onClick={handleStart} // Changed from handleStart() to handleStart
+          className="px-6 sm:px-8 py-3 sm:py-4 font-bold text-gray-900 transition-all duration-300 transform rounded-full shadow-lg group bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 hover:scale-105 hover:shadow-xl animate-float"
+          onClick={handleStart}
         >
           Start Coding
-          <ChevronRight className="inline-block w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+          <ChevronRight className="inline-block w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform group-hover:translate-x-1" />
         </button>
         <div className="flex justify-center w-full">
           {error && (
-            <div className="p-2 mt-4 text-sm text-white bg-blue-400 border-2 border-blue-700 rounded-lg w-fit">
+            <div className="p-2 mt-4 text-xs sm:text-sm text-white bg-blue-400 border-2 border-blue-700 rounded-lg w-fit">
               {error}
             </div>
           )}
