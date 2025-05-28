@@ -119,7 +119,7 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error("Error:", e);
     }
-  }, [updateRemainingTimeFromSeconds]);
+  }, [updateRemainingTimeFromSeconds, navigateTo]);
 
   useEffect(() => {
     setIsLoading(true);

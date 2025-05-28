@@ -11,7 +11,6 @@ import { EditorView, type ViewUpdate } from "@codemirror/view";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
-import Script from "next/script";
 import { X, AlertTriangle } from "lucide-react";
 
 import {

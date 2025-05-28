@@ -2,9 +2,8 @@
 
 /* Plugin "tailwindcss-animate" should be included in the Tailwind CSS configuration file */
 
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
+/* CSS custom properties for Tailwind theming */
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -43,7 +42,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-}
 
 body {
   margin: 0;
@@ -84,8 +82,7 @@ body {
   box-shadow: 0 0 0 2px #fbbf24;
 }
 
-:root {
-  --card: oklch(1 0 0);
+--card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -157,10 +154,12 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
