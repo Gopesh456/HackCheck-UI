@@ -40,8 +40,9 @@ function LandingPage() {
               Hack the Future
             </h1>
             <p className="max-w-2xl mx-auto mb-12 text-xl text-gray-400 fade-in-delay-1">
-              Join the most innovative minds in tech for an unforgettable
-              weekend of creation, collaboration, and breakthrough solutions.
+              Get ready to code,collaborate, and innovate in the Bhavans
+              Innovation Challenge! Join us for an exciting journey of
+              creativity and problem-solving.
             </p>
             <div className="flex justify-center gap-4 fade-in-delay-2">
               <button
@@ -52,6 +53,10 @@ function LandingPage() {
                 <ChevronRight className="inline-block w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
+            <div className="inline-flex items-center justify-center fade-in-delay-2 gap-2 px-4 py-1 mb-8 rounded-full bg-amber-400/10 mt-5">
+              <Rocket className="w-5 h-5 text-amber-400" />
+              <span className="text-amber-400">Login with Your Team Name</span>
+            </div>
           </div>
         </div>
       </div>
@@ -60,10 +65,10 @@ function LandingPage() {
       <div className="relative py-20 border-t border-gray-800">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            <StatCard number="40+" label="Participants" />
+            <StatCard number="30+" label="Participants" />
             <StatCard number="10" label="Challenges" />
             <StatCard number="2" label="Rounds" />
-            <StatCard number="8h" label="of Innovation" />
+            <StatCard number="5h" label="of Innovation" />
           </div>
         </div>
       </div>

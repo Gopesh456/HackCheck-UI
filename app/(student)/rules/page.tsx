@@ -2,11 +2,15 @@
 import React, { useEffect } from "react";
 import {
   Code2,
-  Users,
   Clock,
   Trophy,
   Rocket,
   ChevronRight,
+  Wifi,
+  Code,
+  CodeIcon,
+  CodeXml,
+  CodeSquareIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { fetchData } from "@/utils/api";
@@ -78,36 +82,58 @@ function RulesPage() {
       {/* Rules Grid */}
       <div className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <RuleCard
-            icon={Users}
-            title="Team Formation"
-            description="Form teams of 2-3 members. Solo participants are also welcome."
-            delay="fade-in-delay-1"
-          />
-          <RuleCard
-            icon={Clock}
-            title="Time Limit"
-            description="3 hours to build your project from scratch. No pre-built solutions allowed."
-            delay="fade-in-delay-2"
-          />
-          <RuleCard
-            icon={Code2}
-            title="Original Code"
-            description="All code must be written during the hackathon. Use of open-source libraries is allowed."
-            delay="fade-in-delay-2"
-          />
-          <RuleCard
-            icon={Trophy}
-            title="Judging Criteria"
-            description="Points will be awarded based on the quality of the code and the time taken."
-            delay="fade-in-delay-3"
-          />
-          <RuleCard
-            icon={Rocket}
-            title="Submissions"
-            description="Submit your code using the built in IDE. Winners will be announced after the hackathon."
-            delay="fade-in-delay-3"
-          />
+          {[
+            {
+              icon: Wifi,
+              title: "Restricted Internet Access",
+              description:
+                "Internet usage will be limited during this round to ensure fair play.",
+              delay: "fade-in-delay-1",
+            },
+            {
+              icon: Clock,
+              title: "Strict Time Limit",
+              description:
+                "Teams have 2 hours to complete all tasks. The session will automatically end after the time is up.",
+              delay: "fade-in-delay-2",
+            },
+            {
+              icon: Code2,
+              title: "Write Original Code",
+              description:
+                "All code must be created during the hackathon. Using open-source libraries is allowed.",
+              delay: "fade-in-delay-2",
+            },
+            {
+              icon: Trophy,
+              title: "Evaluation Criteria",
+              description:
+                "Teams will be judged based on the number of problems solved and the time taken to complete them.",
+              delay: "fade-in-delay-3",
+            },
+            {
+              icon: Rocket,
+              title: "Real-Time Leaderboard",
+              description:
+                "Points for each question will be updated live on the leaderboard.",
+              delay: "fade-in-delay-3",
+            },
+            {
+              icon: CodeSquareIcon, // Changed to avoid repeating icons
+              title: "Code Submission",
+              description:
+                "Submit your solutions using the built-in IDE. Winners will be announced after the hackathon ends.",
+              delay: "fade-in-delay-3",
+            },
+          ].map((rule, index) => (
+            <RuleCard
+              key={index}
+              icon={rule.icon}
+              title={rule.title}
+              description={rule.description}
+              delay={rule.delay}
+            />
+          ))}
         </div>
       </div>
 
