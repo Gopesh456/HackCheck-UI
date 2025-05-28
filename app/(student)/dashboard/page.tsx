@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion"; // Import motion from framer-motion
 
 import Navbar from "@/components/navbar"; // Import the Navbar component
 import { useRouter } from "next/navigation"; // Import router for navigation
 import { fetchData } from "@/utils/api";
-// import AcmeLogo from "../components/AcmeLogo";
 
 // Type definition for the question from API
 interface Question {
@@ -109,128 +109,250 @@ const Dashboard = () => {
     return status; // Return as is if it's neither
   };
 
-  return (
-    <>
-      <div className="h-full w-full bg-[#121418]">
-        <Navbar />
-        <div className="bg-[#121418] text-white p-5 h-full dark px-30">
-          <div className="pl-3 text-4xl font-bold border-l-4 dark:text-white border-l-white ">
-            Hackathon Questions
-          </div>
-          <br />
+  // Animation variants for container
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
+  // Animation variants for each item
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 80,
+        damping: 12,
+      },
+    },
+    hover: {
+      scale: 1.02,
+      boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.3)",
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+      },
+    },
+  };
+
+  // Page animation variants
+  const pageVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        when: "beforeChildren",
+      },
+    },
+  };
+
+  // Header animation variants
+  const headerVariants = {
+    hidden: { x: -50, opacity: 0 },
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        delay: 0.2,
+      },
+    },
+  };
+
+  // Content container animation variants
+  const contentVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        delay: 0.3,
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="h-full w-full bg-[#121418]"
+      initial="hidden"
+      animate="visible"
+      variants={pageVariants}
+    >
+      <Navbar />
+      <div className="bg-[#121418] text-white p-5 h-full dark px-30">
+        <motion.div
+          className="pl-3 text-4xl font-bold border-l-4 dark:text-white border-l-white"
+          variants={headerVariants}
+        >
+          Hackathon Questions
+        </motion.div>
+        <br />
+
+        <motion.div variants={contentVariants}>
           {loading ? (
-            <div className="py-10 text-center">Loading questions...</div>
+            <motion.div
+              className="py-10 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              Loading questions...
+            </motion.div>
           ) : error ? (
-            <div className="py-10 text-center text-red-500">{error}</div>
+            <motion.div
+              className="py-10 text-center text-red-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {error}
+            </motion.div>
           ) : questions.length === 0 ? (
-            <div className="py-10 text-center">No questions available.</div>
+            <motion.div
+              className="py-10 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              No questions available.
+            </motion.div>
           ) : (
-            questions.map((question, index) => (
-              <div
-                key={index}
-                className="bg-[#1F202A] rounded-lg p-5 mb-5 shadow-lg flex items-center justify-between"
-              >
-                <div>
-                  <div className="text-2xl font-bold dark:text-white">
-                    {question.title}
-                  </div>
-                  <span
-                    className={`mt-2 text-sm ${
-                      question.difficulty.toLowerCase() === "easy"
-                        ? "text-[#23D05E]"
-                        : question.difficulty.toLowerCase() === "medium"
-                        ? "text-[#D05537]"
-                        : question.difficulty.toLowerCase() === "expert"
-                        ? "text-[#CB3B3F]"
-                        : ""
-                    }`}
-                  >
-                    {question.difficulty} &nbsp;
-                  </span>
-                  <span className="mt-2 text-sm ">
-                    <span> Score: {question.Score}</span>
-                    <span className="ml-4">Status:</span>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {questions.map((question, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-[#1F202A] rounded-lg p-5 mb-5 shadow-lg flex items-center justify-between"
+                  variants={itemVariants}
+                  whileHover="hover"
+                  layout
+                >
+                  <div>
+                    <div className="text-2xl font-bold dark:text-white">
+                      {question.title}
+                    </div>
                     <span
                       className={`mt-2 text-sm ${
-                        question.Status.toLowerCase() === "correct"
+                        question.difficulty.toLowerCase() === "easy"
                           ? "text-[#23D05E]"
-                          : question.Status.toLowerCase() === "incorrect"
+                          : question.difficulty.toLowerCase() === "medium"
                           ? "text-[#D05537]"
-                          : question.Status.toLowerCase() === "pending"
-                          ? "text-white"
+                          : question.difficulty.toLowerCase() === "expert"
+                          ? "text-[#CB3B3F]"
                           : ""
-                      } `}
+                      }`}
                     >
-                      {" "}
-                      {question.Status}
+                      {question.difficulty} &nbsp;
                     </span>
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleSolveChallenge(question.number)}
-                  disabled={
-                    loadingQuestion === question.number ||
-                    question.Status.toLowerCase() === "correct"
-                  }
-                  className={`text-white border rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ${
-                    question.Status.toLowerCase() === "correct"
-                      ? "border-white cursor-default"
-                      : "border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
-                  } disabled:opacity-70`}
-                >
-                  {loadingQuestion === question.number ? (
-                    <div className="flex items-center">
-                      <svg
-                        className="w-4 h-4 mr-2 -ml-1 text-white animate-spin"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+                    <span className="mt-2 text-sm ">
+                      <span> Score: {question.Score}</span>
+                      <span className="ml-4">Status:</span>
+                      <span
+                        className={`mt-2 text-sm ${
+                          question.Status.toLowerCase() === "correct"
+                            ? "text-[#23D05E]"
+                            : question.Status.toLowerCase() === "incorrect"
+                            ? "text-[#D05537]"
+                            : question.Status.toLowerCase() === "pending"
+                            ? "text-white"
+                            : ""
+                        } `}
                       >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
+                        {" "}
+                        {question.Status}
+                      </span>
+                    </span>
+                  </div>
+                  <motion.button
+                    onClick={() => handleSolveChallenge(question.number)}
+                    disabled={
+                      loadingQuestion === question.number ||
+                      question.Status.toLowerCase() === "correct"
+                    }
+                    className={`text-white border rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ${
+                      question.Status.toLowerCase() === "correct"
+                        ? "border-white cursor-default"
+                        : "border-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800"
+                    } disabled:opacity-70`}
+                    whileHover={
+                      question.Status.toLowerCase() !== "correct"
+                        ? { scale: 1.05 }
+                        : {}
+                    }
+                    whileTap={
+                      question.Status.toLowerCase() !== "correct"
+                        ? { scale: 0.95 }
+                        : {}
+                    }
+                  >
+                    {loadingQuestion === question.number ? (
+                      <div className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 -ml-1 text-white animate-spin"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Loading...
+                      </div>
+                    ) : question.Status.toLowerCase() === "correct" ? (
+                      <div className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 -ml-1 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
                           stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Loading...
-                    </div>
-                  ) : question.Status.toLowerCase() === "correct" ? (
-                    <div className="flex items-center">
-                      <svg
-                        className="w-4 h-4 mr-2 -ml-1 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Solved
-                    </div>
-                  ) : (
-                    "Solve Challenge"
-                  )}
-                </button>
-              </div>
-            ))
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Solved
+                      </div>
+                    ) : (
+                      "Solve Challenge"
+                    )}
+                  </motion.button>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </>
+    </motion.div>
   );
 };
 
