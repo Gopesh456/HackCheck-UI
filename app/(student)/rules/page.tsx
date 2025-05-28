@@ -6,10 +6,7 @@ import {
   Trophy,
   Rocket,
   ChevronRight,
-  Wifi,
-  Code,
-  CodeIcon,
-  CodeXml,
+  WifiOff,
   CodeSquareIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -84,7 +81,7 @@ function RulesPage() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              icon: Wifi,
+              icon: WifiOff,
               title: "Restricted Internet Access",
               description:
                 "Internet usage will be limited during this round to ensure fair play.",
