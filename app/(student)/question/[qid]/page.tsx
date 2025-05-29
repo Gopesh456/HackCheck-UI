@@ -525,6 +525,7 @@ def eval_arithmetic(expr):
           `You were away from the page for ${timeAway} seconds. This activity has been logged.`,
           {
             duration: 5000,
+            cancel: true,
           }
         );
 
