@@ -228,7 +228,7 @@ def eval_arithmetic(expr):
   const savedCode = "savedCode" + params.qid;
   const handleSave = () => {
     localStorage.setItem(savedCode, code);
-    toast.success("Code saved successfully!", {});
+    toast.success("Code saved successfully!", {closeButton: true, duration: 3000});
   };
 
   // Function to run code against hidden test cases
@@ -296,6 +296,8 @@ def eval_arithmetic(expr):
     setIsSubmitting(false);
 
     toast.success("Code submitted successfully!", {
+      duration: 5000,
+      closeButton: true,
       style: {
         backgroundColor: allPassed ? "#088255" : "#d32f2f",
         color: "white",
@@ -502,6 +504,7 @@ def eval_arithmetic(expr):
       toast.error(
         "Python interpreter is not loaded yet. Please wait a moment and try again.",
         {
+          closeButton: true,
           duration: 3000,
           style: { backgroundColor: "#d32f2f", color: "white" },
         }
@@ -573,10 +576,11 @@ def eval_arithmetic(expr):
       const content = (e.target as FileReader).result as string;
       setCode(content);
       setKey((prevKey) => prevKey + 1); // Force editor refresh
-      toast.success(`File "${file.name}" uploaded successfully!`);
+      toast.success(`File "${file.name}" uploaded successfully!`,{closeButton: true, duration: 3000});
     };
     reader.onerror = () => {
       toast.error("Error reading file", {
+        closeButton: true,
         style: { backgroundColor: "#d32f2f", color: "white" },
       });
     };
@@ -862,6 +866,7 @@ def eval_arithmetic(expr):
 
       // Show success message
       toast.success("Code shared successfully!", {
+        closeButton: true,
         duration: 3000,
         style: { backgroundColor: "#088255", color: "white" },
       });
