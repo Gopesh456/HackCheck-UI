@@ -32,7 +32,6 @@ const Navbar = () => {
 
   // Function to refresh inbox items
   const refreshInbox = () => {
-    console.log("Refreshing inbox items...");
     getSharedList();
     setCurrentPage(1); // Reset to first page on refresh
   };
@@ -95,7 +94,6 @@ const Navbar = () => {
       setInboxItems([]);
 
       const res = await fetchData("get_shared_code/", "POST", null);
-      console.log(res.shared_codes);
 
       interface SharedCode {
         code: string;
@@ -149,7 +147,6 @@ const Navbar = () => {
       // This log shows the state from the previous render due to closure
 
       if (time <= 0) {
-        console.log("Time is up! Timer has reached zero.");
         router.push("/credits");
       }
     }, 1000);
@@ -160,7 +157,6 @@ const Navbar = () => {
 
   // Format time for display
   const formattedTime = new Date(time * 1000).toISOString().substr(11, 8);
-  console.log(`Formatted time for display: ${formattedTime}`);
 
   // Logout function to remove token cookie
   const handleLogout = () => {

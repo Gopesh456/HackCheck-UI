@@ -9,7 +9,6 @@ import { python } from "@codemirror/lang-python";
 import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import { EditorView, type ViewUpdate } from "@codemirror/view";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import { X, AlertTriangle } from "lucide-react";
 
@@ -21,7 +20,7 @@ import {
 
 declare global {
   interface Window {
-    Sk: {
+    Sk?: {
       builtinFiles: {
         files: { [key: string]: string };
       };
@@ -228,7 +227,6 @@ def eval_arithmetic(expr):
   const savedCode = "savedCode" + params.qid;
   const handleSave = () => {
     localStorage.setItem(savedCode, code);
-    toast.success("Code saved successfully!", {closeButton: true, duration: 3000});
   };
 
   // Function to run code against hidden test cases
@@ -290,22 +288,9 @@ def eval_arithmetic(expr):
       });
     } catch (error) {
       console.error("Error submitting code:", error);
-      toast.error("Error submitting code to server");
     }
 
     setIsSubmitting(false);
-
-    toast.success("Code submitted successfully!", {
-      duration: 5000,
-      closeButton: true,
-      style: {
-        backgroundColor: allPassed ? "#088255" : "#d32f2f",
-        color: "white",
-      },
-      description: allPassed
-        ? "All tests passed!"
-        : "Some tests failed. Try again!!",
-    });
   };
 
   // Enhanced Skulpt loading function with local files and fallback
@@ -427,13 +412,10 @@ def eval_arithmetic(expr):
         // Function to read files required by Skulpt
         function builtinRead(x: string): string {
           if (x !== "<stdin>") {
-            if (
-              window.Sk.builtinFiles === undefined ||
-              window.Sk.builtinFiles["files"][x] === undefined
-            ) {
+            if (!window.Sk?.builtinFiles?.files?.[x]) {
               throw "File not found: '" + x + "'";
             }
-            return window.Sk.builtinFiles["files"][x];
+            return window.Sk.builtinFiles.files[x];
           }
 
           // Return the predefined input
@@ -464,7 +446,7 @@ def eval_arithmetic(expr):
         // Run the processed code with better error handling
         window.Sk.misceval
           .asyncToPromise(() => {
-            return window.Sk.importMainWithBody(
+            return window.Sk!.importMainWithBody(
               "<stdin>",
               false,
               processedCode,
@@ -477,6 +459,115 @@ def eval_arithmetic(expr):
           .catch((error) => {
             // Enhanced error reporting
             let errorMessage = error.toString();
+
+            // Check for module import errors that indicate Skulpt needs reloading
+            const isModuleError =
+              errorMessage.includes("ImportError") &&
+              (errorMessage.includes("No module named sys") ||
+                errorMessage.includes("No module named os") ||
+                errorMessage.includes("No module named math") ||
+                errorMessage.includes("No module named random"));
+
+            if (isModuleError) {
+              // Trigger automatic Skulpt reload instead of page refresh
+              console.log("Module import error detected, reloading Skulpt...");
+
+              // Reset Skulpt state and reload
+              setSkulptLoaded(false);
+              setSkulptLoadingError(null);
+
+              // Remove existing Skulpt scripts
+              const existingScripts = document.querySelectorAll(
+                'script[src*="skulpt"]'
+              );
+              existingScripts.forEach((script) => script.remove());
+
+              // Clear Skulpt from window object
+              if (window.Sk) {
+                delete window.Sk;
+              }
+
+              // Reload Skulpt after a short delay
+              setTimeout(() => {
+                loadSkulpt().then((success) => {
+                  if (success && window.Sk && window.Sk.misceval) {
+                    console.log("Skulpt reloaded successfully");
+
+                    // Reset output and input for retry
+                    let retryOutputText = "";
+                    let retryInputIndex = 0;
+                    const retryInputLines = input.toString().split("\n");
+
+                    // Reconfigure Skulpt for retry
+                    window.Sk.configure({
+                      output: function (text: string) {
+                        retryOutputText += text;
+                      },
+                      read: function (x: string) {
+                        if (x !== "<stdin>") {
+                          if (!window.Sk?.builtinFiles?.files?.[x]) {
+                            throw "File not found: '" + x + "'";
+                          }
+                          return window.Sk.builtinFiles.files[x];
+                        }
+                        if (retryInputIndex < retryInputLines.length) {
+                          return retryInputLines[retryInputIndex++];
+                        }
+                        return "";
+                      },
+                      __future__: window.Sk.python3,
+                      inputfun: function () {
+                        if (retryInputIndex < retryInputLines.length) {
+                          return retryInputLines[retryInputIndex++];
+                        }
+                        return "";
+                      },
+                      execLimit: 10000,
+                      yieldLimit: null,
+                      killableWhile: true,
+                      killableFor: true,
+                    });
+
+                    // Automatically retry the code execution
+                    setTimeout(() => {
+                      window
+                        .Sk!.misceval.asyncToPromise(() => {
+                          return window.Sk!.importMainWithBody(
+                            "<stdin>",
+                            false,
+                            processedCode,
+                            true
+                          );
+                        })
+                        .then(() => {
+                          resolve(retryOutputText.trim());
+                        })
+                        .catch((retryError) => {
+                          // If it still fails, just return the error
+                          let retryErrorMessage = retryError.toString();
+                          retryErrorMessage = retryErrorMessage.replace(
+                            /line (\d+)/g,
+                            (match: string, lineNum: string): string => {
+                              const adjustedLine: number = Math.max(
+                                1,
+                                parseInt(lineNum) - 50
+                              );
+                              return `line ${adjustedLine}`;
+                            }
+                          );
+                          resolve(`Error: ${retryErrorMessage}`);
+                        });
+                    }, 200);
+                  } else {
+                    resolve(
+                      "Error: Failed to reload Python interpreter. Please refresh the page manually."
+                    );
+                  }
+                });
+              }, 500);
+              return;
+            }
+
             // Clean up common Skulpt error messages
             errorMessage = errorMessage.replace(
               /line (\d+)/g,
@@ -501,20 +592,13 @@ def eval_arithmetic(expr):
     setShowTestResults(true); // Show test results when running tests
 
     if (!skulptLoaded) {
-      toast.error(
-        "Python interpreter is not loaded yet. Please wait a moment and try again.",
-        {
-          closeButton: true,
-          duration: 3000,
-          style: { backgroundColor: "#d32f2f", color: "white" },
-        }
-      );
       setIsLoading(false);
       return;
     }
 
     // Create a copy of test cases to update
     const updatedTestResults = [...testResults];
+    let moduleErrorDetected = false;
 
     // Run each test case
     for (let i = 0; i < testCases.length; i++) {
@@ -526,6 +610,11 @@ def eval_arithmetic(expr):
         const hasError =
           typeof output === "string" && output.startsWith("Error:");
         const outputStr = typeof output === "string" ? output : String(output);
+
+        // Check for module reload message
+        if (outputStr.includes("Python interpreter is being reloaded")) {
+          moduleErrorDetected = true;
+        }
 
         updatedTestResults[i] = {
           ...testCase,
@@ -550,6 +639,12 @@ def eval_arithmetic(expr):
 
     setTestResults(updatedTestResults);
     setIsLoading(false);
+
+    // If module error was detected, show additional guidance
+    if (moduleErrorDetected) {
+      // No need to reload page since we're handling it in runCodeWithInput
+      console.log("Module error was detected and handled automatically");
+    }
   };
 
   // Handle file upload button click
@@ -564,9 +659,6 @@ def eval_arithmetic(expr):
 
     // Check if file is a Python file
     if (!file.name.endsWith(".py")) {
-      toast.error("Please upload a Python (.py) file", {
-        style: { backgroundColor: "#d32f2f", color: "white" },
-      });
       return;
     }
 
@@ -576,14 +668,8 @@ def eval_arithmetic(expr):
       const content = (e.target as FileReader).result as string;
       setCode(content);
       setKey((prevKey) => prevKey + 1); // Force editor refresh
-      toast.success(`File "${file.name}" uploaded successfully!`,{closeButton: true, duration: 3000});
     };
-    reader.onerror = () => {
-      toast.error("Error reading file", {
-        closeButton: true,
-        style: { backgroundColor: "#d32f2f", color: "white" },
-      });
-    };
+    reader.onerror = () => {};
     reader.readAsText(file);
 
     // Reset file input value so the same file can be uploaded again
@@ -620,14 +706,6 @@ def eval_arithmetic(expr):
         setTotalTimeAway((prev) => prev + timeAway);
 
         // Show warning toast
-        toast.warning(
-          `You were away from the page for ${timeAway} seconds. This activity has been logged.`,
-          {
-            duration: 5000,
-            cancel: true,
-          }
-        );
-
         logActivity("page_visible", {
           event: "Page became visible again",
           timeAway: timeAway,
@@ -664,13 +742,6 @@ def eval_arithmetic(expr):
         const timeAway = Math.round((Date.now() - timeAwayRef.current) / 1000);
         setTotalTimeAway((prev) => prev + timeAway);
 
-        toast.warning(
-          `You clicked outside the browser for ${timeAway} seconds. This activity has been logged.`,
-          {
-            duration: 5000,
-          }
-        );
-
         logActivity("window_focus", {
           event: "Window regained focus",
           timeAway: timeAway,
@@ -692,23 +763,21 @@ def eval_arithmetic(expr):
 
   // Warn on page exit attempt
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const message =
-        "Are you sure you want to leave? This action will be logged.";
-
-      logActivity("page_exit_attempt", {
-        event: "User attempted to leave/refresh the page",
-      });
-
-      e.preventDefault();
-      e.returnValue = message;
-      return message;
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    // Remove the beforeunload event listener to prevent confirmation alert
+    // const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    //   const message =
+    //     "Are you sure you want to leave? This action will be logged.";
+    //   logActivity("page_exit_attempt", {
+    //     event: "User attempted to leave/refresh the page",
+    //   });
+    //   e.preventDefault();
+    //   e.returnValue = message;
+    //   return message;
+    // };
+    // window.addEventListener("beforeunload", handleBeforeUnload);
+    // return () => {
+    //   window.removeEventListener("beforeunload", handleBeforeUnload);
+    // };
   }, [params.qid]);
 
   useEffect(() => {
@@ -807,11 +876,6 @@ def eval_arithmetic(expr):
         }
       } catch (error) {
         console.error("Error fetching question:", error);
-        toast.error(
-          `Failed to load question data: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
       } finally {
         setLoading(false);
       }
@@ -846,15 +910,6 @@ def eval_arithmetic(expr):
       const MAX_CODE_SIZE = 25 * 1024; // 50KB in bytes/characters
 
       if (code.length > MAX_CODE_SIZE) {
-        toast.error(
-          `Code is too large to share (${(code.length / 1024).toFixed(
-            2
-          )}KB). Maximum size is ${MAX_CODE_SIZE / 1024}KB.`,
-          {
-            duration: 5000,
-            style: { backgroundColor: "#d32f2f", color: "white" },
-          }
-        );
         return;
       }
 
@@ -863,54 +918,13 @@ def eval_arithmetic(expr):
         question_number: params.qid,
         shared_code: code,
       });
-
-      // Show success message
-      toast.success("Code shared successfully!", {
-        closeButton: true,
-        duration: 3000,
-        style: { backgroundColor: "#088255", color: "white" },
-      });
     } catch (error) {
       console.error("Error sharing code:", error);
-      toast.error(
-        `Failed to share code: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-        {
-          duration: 3000,
-          style: { backgroundColor: "#d32f2f", color: "white" },
-        }
-      );
     }
   };
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
-      {/* Add Skulpt status indicator */}
-      {!skulptLoaded && !skulptLoadingError && (
-        <div className="fixed top-16 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg">
-          <div className="flex items-center">
-            <svg className="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Loading Python Engine...
-          </div>
-        </div>
-      )}
-
       {skulptLoadingError && (
         <div className="fixed top-16 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-md shadow-lg">
           <div className="flex items-center">
