@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "download-skulpt": "node scripts/download-skulpt.js",
+    "postinstall": "npm run download-skulpt"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",

@@ -306,10 +306,106 @@ def eval_arithmetic(expr):
     });
   };
 
+  // Enhanced Skulpt loading function with local files and fallback
+  const loadSkulpt = async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      // Check if already loaded
+      if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
+        setSkulptLoaded(true);
+        resolve(true);
+        return;
+      }
+
+      let skulptLoaded = false;
+      let stdlibLoaded = false;
+
+      const checkComplete = () => {
+        if (skulptLoaded && stdlibLoaded) {
+          if (window.Sk && window.Sk.misceval) {
+            setSkulptLoaded(true);
+            setSkulptLoadingError(null);
+            resolve(true);
+          } else {
+            setSkulptLoadingError("Failed to initialize Skulpt properly");
+            resolve(false);
+          }
+        }
+      };
+
+      // Function to load script with fallback
+      const loadScript = (
+        localPath: string,
+        cdnPath: string,
+        onLoad: () => void,
+        onError: () => void
+      ) => {
+        const script = document.createElement("script");
+
+        // Try local first
+        script.src = localPath;
+        script.onload = () => {
+          onLoad();
+        };
+        script.onerror = () => {
+          // Fallback to CDN
+          const fallbackScript = document.createElement("script");
+          fallbackScript.src = cdnPath;
+          fallbackScript.onload = onLoad;
+          fallbackScript.onerror = onError;
+          document.head.appendChild(fallbackScript);
+        };
+
+        document.head.appendChild(script);
+      };
+
+      // Load Skulpt core
+      loadScript(
+        "/skulpt/skulpt.min.js", // Local path (you'll need to add this to public folder)
+        "https://skulpt.org/js/skulpt.min.js",
+        () => {
+          skulptLoaded = true;
+          checkComplete();
+        },
+        () => {
+          setSkulptLoadingError("Failed to load Skulpt core library");
+          resolve(false);
+        }
+      );
+
+      // Load Skulpt stdlib
+      loadScript(
+        "/skulpt/skulpt-stdlib.js", // Local path (you'll need to add this to public folder)
+        "https://skulpt.org/js/skulpt-stdlib.js",
+        () => {
+          stdlibLoaded = true;
+          checkComplete();
+        },
+        () => {
+          setSkulptLoadingError("Failed to load Skulpt standard library");
+          resolve(false);
+        }
+      );
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (!skulptLoaded || !stdlibLoaded) {
+          setSkulptLoadingError("Skulpt loading timed out");
+          resolve(false);
+        }
+      }, 10000);
+    });
+  };
+
   const runCodeWithInput = async (code: string, input: string) => {
     return new Promise((resolve, reject) => {
       if (typeof window === "undefined" || !window.Sk) {
         reject(new Error("Skulpt is not loaded yet"));
+        return;
+      }
+
+      // Check if Skulpt is properly initialized
+      if (!window.Sk.misceval || !window.Sk.importMainWithBody) {
+        reject(new Error("Skulpt is not properly initialized"));
         return;
       }
 
@@ -345,7 +441,7 @@ def eval_arithmetic(expr):
           return "";
         }
 
-        // Prepare Skulpt
+        // Prepare Skulpt with enhanced configuration
         window.Sk.configure({
           output: outf,
           read: builtinRead,
@@ -357,9 +453,13 @@ def eval_arithmetic(expr):
             }
             return "";
           },
+          execLimit: 10000, // Prevent infinite loops
+          yieldLimit: null,
+          killableWhile: true,
+          killableFor: true,
         });
 
-        // Run the processed code
+        // Run the processed code with better error handling
         window.Sk.misceval
           .asyncToPromise(() => {
             return window.Sk.importMainWithBody(
@@ -373,8 +473,17 @@ def eval_arithmetic(expr):
             resolve(outputText.trim());
           })
           .catch((error) => {
-            // Any exception means the test case failed
-            resolve(`Error: ${error.toString()}`);
+            // Enhanced error reporting
+            let errorMessage = error.toString();
+            // Clean up common Skulpt error messages
+            errorMessage = errorMessage.replace(
+              /line (\d+)/g,
+              (match: string, lineNum: string): string => {
+              const adjustedLine: number = Math.max(1, parseInt(lineNum) - 50);
+              return `line ${adjustedLine}`;
+              }
+            );
+            resolve(`Error: ${errorMessage}`);
           });
       } catch (error) {
         reject(error);
@@ -474,23 +583,7 @@ def eval_arithmetic(expr):
     event.target.value = "";
   };
 
-  // Handle Skulpt loading
-  const handleSkulptLoad = () => {
-    if (window.Sk && window.Sk.misceval) {
-      setSkulptLoaded(true);
-      setSkulptLoadingError(null);
-    } else {
-      setSkulptLoadingError("Failed to initialize Skulpt interpreter");
-      console.error("Failed to load Skulpt properly");
-    }
-  };
-
-  // Handle Skulpt loading error
-  const handleSkulptError = () => {
-    setSkulptLoadingError("Failed to load Skulpt libraries");
-    console.error("Failed to load Skulpt");
-  };
-
+  
   // Function to log suspicious activity
   const logActivity = async (
     activityType: string,
@@ -727,31 +820,20 @@ def eval_arithmetic(expr):
       setCode(initialCode);
     }
 
-    // Check if Skulpt is already loaded
-    if (typeof window !== "undefined" && window.Sk && window.Sk.misceval) {
-      setSkulptLoaded(true);
-    }
-
-    // Add a timeout to check if Skulpt failed to load
-    const timeoutId = setTimeout(() => {
-      if (!skulptLoaded && typeof window !== "undefined") {
-        // If not loaded after 5 seconds, try loading from CDN again
-        const skulptScript = document.createElement("script");
-        skulptScript.src = "https://skulpt.org/js/skulpt.min.js";
-        skulptScript.onload = () => {
-          const stdlibScript = document.createElement("script");
-          stdlibScript.src = "https://skulpt.org/js/skulpt-stdlib.js";
-          stdlibScript.onload = handleSkulptLoad;
-          stdlibScript.onerror = handleSkulptError;
-          document.head.appendChild(stdlibScript);
-        };
-        skulptScript.onerror = handleSkulptError;
-        document.head.appendChild(skulptScript);
+    // Load Skulpt with enhanced loading mechanism
+    loadSkulpt().then((success) => {
+      if (!success) {
+        console.error("Failed to load Skulpt");
+        // Try one more time with a different approach
+        setTimeout(() => {
+          if (!skulptLoaded) {
+            loadSkulpt();
+          }
+        }, 2000);
       }
-    }, 5000);
-
-    return () => clearTimeout(timeoutId);
+    });
   }, [params.qid, initialCode, savedCode, skulptLoaded]);
+
   const handleShare = async () => {
     try {
       // Check code size limit (50KB is a reasonable limit)
@@ -797,7 +879,51 @@ def eval_arithmetic(expr):
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
-      {/* Script tags remain unchanged */}
+      {/* Add Skulpt status indicator */}
+      {!skulptLoaded && !skulptLoadingError && (
+        <div className="fixed top-16 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg">
+          <div className="flex items-center">
+            <svg className="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            Loading Python Engine...
+          </div>
+        </div>
+      )}
+
+      {skulptLoadingError && (
+        <div className="fixed top-16 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-md shadow-lg">
+          <div className="flex items-center">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Python Engine Failed
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSkulptLoadingError(null);
+                loadSkulpt();
+              }}
+              className="ml-2 text-white hover:bg-red-700"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Navbar />
 
       {/* Warning Banner */}
