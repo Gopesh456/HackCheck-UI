@@ -479,8 +479,11 @@ def eval_arithmetic(expr):
             errorMessage = errorMessage.replace(
               /line (\d+)/g,
               (match: string, lineNum: string): string => {
-              const adjustedLine: number = Math.max(1, parseInt(lineNum) - 50);
-              return `line ${adjustedLine}`;
+                const adjustedLine: number = Math.max(
+                  1,
+                  parseInt(lineNum) - 50
+                );
+                return `line ${adjustedLine}`;
               }
             );
             resolve(`Error: ${errorMessage}`);
@@ -583,7 +586,6 @@ def eval_arithmetic(expr):
     event.target.value = "";
   };
 
-  
   // Function to log suspicious activity
   const logActivity = async (
     activityType: string,
@@ -1011,7 +1013,7 @@ def eval_arithmetic(expr):
         </ResizablePanel>
         <ResizableHandle withHandle className="w-[0.2rem] dark" />
         <ResizablePanel defaultSize={55}>
-          <div className="w-full p-3 sm:p-6 overflow-y-auto h-[90vh]">
+          <div className="w-full p-3 sm:p-6 overflow-y-auto h-[83vh]">
             <div className="flex flex-wrap justify-end w-full gap-2 bg-[#151616] mb-3 rounded-md p-2">
               {!skulptLoaded && (
                 <Button
