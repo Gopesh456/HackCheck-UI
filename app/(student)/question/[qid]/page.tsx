@@ -10,7 +10,7 @@ import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import { EditorView, type ViewUpdate } from "@codemirror/view";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, CheckCircle, XCircle, Share } from "lucide-react";
 
 import {
   ResizableHandle,
@@ -104,6 +104,60 @@ const QuestionPage = () => {
   const [totalTimeAway, setTotalTimeAway] = useState(0);
   const [showWarningBanner, setShowWarningBanner] = useState(true);
   const timeAwayRef = useRef<number | null>(null);
+
+  // Add state for submission toast
+  const [submissionToast, setSubmissionToast] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+    passedTests: number;
+    totalTests: number;
+  } | null>(null);
+
+  // Add state for share toast
+  const [shareToast, setShareToast] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Function to show submission toast
+  const showSubmissionToast = (
+    success: boolean,
+    passedTests: number,
+    totalTests: number
+  ) => {
+    const message = success
+      ? `All hidden tests passed! Your solution is correct.`
+      : `${passedTests}/${totalTests} hidden tests passed. Please review your solution.`;
+
+    setSubmissionToast({
+      show: true,
+      type: success ? "success" : "error",
+      message,
+      passedTests,
+      totalTests,
+    });
+
+    // Auto-hide toast after 10 seconds
+    setTimeout(() => {
+      setSubmissionToast(null);
+    }, 10000);
+  };
+
+  // Function to show share toast
+  const showShareToast = (success: boolean, message: string) => {
+    setShareToast({
+      show: true,
+      type: success ? "success" : "error",
+      message,
+    });
+
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShareToast(null);
+    }, 5000);
+  };
 
   // Function to autosave code to localStorage without moving cursor
   const handleAutoSave = (newCode: string, viewUpdate?: ViewUpdate) => {
@@ -230,13 +284,13 @@ def eval_arithmetic(expr):
   };
 
   // Function to run code against hidden test cases
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     localStorage.setItem(savedCode, code);
 
     // Run hidden tests and collect results
     let allPassed = true;
+    let passedCount = 0;
     const testResultsObj: {
       [key: string]: {
         input: string;
@@ -264,7 +318,9 @@ def eval_arithmetic(expr):
           passed: isPassing,
         };
 
-        if (!isPassing) {
+        if (isPassing) {
+          passedCount++;
+        } else {
           allPassed = false;
         }
       } catch (error) {
@@ -286,8 +342,20 @@ def eval_arithmetic(expr):
         is_correct_answer: allPassed,
         tests: testResultsObj,
       });
+
+      // Show submission result toast
+      showSubmissionToast(allPassed, passedCount, hiddenTestCases.length);
     } catch (error) {
       console.error("Error submitting code:", error);
+      // Show error toast for submission failure
+      setSubmissionToast({
+        show: true,
+        type: "error",
+        message: "Failed to submit code. Please try again.",
+        passedTests: 0,
+        totalTests: 0,
+      });
+      setTimeout(() => setSubmissionToast(null), 5000);
     }
 
     setIsSubmitting(false);
@@ -910,6 +978,10 @@ def eval_arithmetic(expr):
       const MAX_CODE_SIZE = 25 * 1024; // 50KB in bytes/characters
 
       if (code.length > MAX_CODE_SIZE) {
+        showShareToast(
+          false,
+          "Code is too large to share. Please reduce the size."
+        );
         return;
       }
 
@@ -918,13 +990,142 @@ def eval_arithmetic(expr):
         question_number: params.qid,
         shared_code: code,
       });
+
+      // Show success toast
+      showShareToast(
+        true,
+        "Code shared successfully! It can be viewed in the inbox."
+      );
     } catch (error) {
       console.error("Error sharing code:", error);
+      showShareToast(false, "Failed to share code. Please try again.");
     }
   };
 
   return (
     <div className="bg-[#020609] text-white h-[100vh] overflow-hidden">
+      {/* Share Toast */}
+      {shareToast?.show && (
+        <div className="fixed bottom-4 left-4 z-50 max-w-md">
+          <div
+            className={`p-4 rounded-md shadow-lg border ${
+              shareToast.type === "success"
+                ? "bg-blue-900 border-blue-600 text-blue-100"
+                : "bg-red-900 border-red-600 text-red-100"
+            }`}
+          >
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {shareToast.type === "success" ? (
+                  <Share className="w-5 h-5 text-blue-400" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-400" />
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <h3
+                  className={`text-sm font-medium ${
+                    shareToast.type === "success"
+                      ? "text-blue-100"
+                      : "text-red-100"
+                  }`}
+                >
+                  {shareToast.type === "success"
+                    ? "Code Shared!"
+                    : "Share Failed"}
+                </h3>
+                <div
+                  className={`mt-1 text-sm ${
+                    shareToast.type === "success"
+                      ? "text-blue-200"
+                      : "text-red-200"
+                  }`}
+                >
+                  <p>{shareToast.message}</p>
+                </div>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  className={`inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    shareToast.type === "success"
+                      ? "text-blue-400 hover:bg-blue-800 focus:ring-blue-600"
+                      : "text-red-400 hover:bg-red-800 focus:ring-red-600"
+                  }`}
+                  onClick={() => setShareToast(null)}
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submission Toast - moved to bottom */}
+      {submissionToast?.show && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-md">
+          <div
+            className={`p-4 rounded-md shadow-lg border ${
+              submissionToast.type === "success"
+                ? "bg-green-900 border-green-600 text-green-100"
+                : "bg-red-900 border-red-600 text-red-100"
+            }`}
+          >
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {submissionToast.type === "success" ? (
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-400" />
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <h3
+                  className={`text-sm font-medium ${
+                    submissionToast.type === "success"
+                      ? "text-green-100"
+                      : "text-red-100"
+                  }`}
+                >
+                  {submissionToast.type === "success"
+                    ? "Submission Successful!"
+                    : "Submission Results"}
+                </h3>
+                <div
+                  className={`mt-1 text-sm ${
+                    submissionToast.type === "success"
+                      ? "text-green-200"
+                      : "text-red-200"
+                  }`}
+                >
+                  <p>{submissionToast.message}</p>
+                  {submissionToast.totalTests > 0 && (
+                    <p className="mt-1 text-xs">
+                      Hidden Tests: {submissionToast.passedTests}/
+                      {submissionToast.totalTests} passed
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  className={`inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    submissionToast.type === "success"
+                      ? "text-green-400 hover:bg-green-800 focus:ring-green-600"
+                      : "text-red-400 hover:bg-red-800 focus:ring-red-600"
+                  }`}
+                  onClick={() => setSubmissionToast(null)}
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {skulptLoadingError && (
         <div className="fixed top-16 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-md shadow-lg">
           <div className="flex items-center">
