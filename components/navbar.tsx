@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const router = useRouter();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   // Inbox modal state
   const [showInboxModal, setShowInboxModal] = useState(false);
   // Countdown state
@@ -88,8 +89,37 @@ const Navbar = () => {
       .catch((error) => console.error("Error downloading file:", error));
   };
 
-  async function getSharedList() {
+  // Enhanced logout function with better error handling
+  const handleLogout = React.useCallback(() => {
     try {
+      // Clear the timer before logout
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
+      Cookies.remove("token"); // Remove the authentication token cookie
+
+      // Add a small delay to ensure cookie is cleared
+      setTimeout(() => {
+        router.push("/login");
+      }, 100);
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Force redirect even if error occurs
+      router.push("/login");
+    }
+  }, [router]);
+
+  const getSharedList = React.useCallback(async () => {
+    try {
+      // Check if token exists before making API call
+      const token = Cookies.get("token");
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        router.push("/login");
+        return;
+      }
+
       // Clear previous items before adding new ones
       setInboxItems([]);
 
@@ -115,55 +145,97 @@ const Navbar = () => {
       }));
 
       setInboxItems(newInboxItems);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching shared code:", error);
-    }
-  }
 
-  async function getTime() {
+      // Only logout for specific authentication errors, not all 401s
+      if (
+        error instanceof Error &&
+        error.message?.includes("token") &&
+        error.message?.includes("invalid")
+      ) {
+        console.log("Invalid token error, logging out");
+        handleLogout();
+      }
+      // Don't logout for other errors - just log them
+    }
+  }, [router, handleLogout]);
+
+  const getTime = React.useCallback(async () => {
     try {
+      // Check if token exists before making API call
+      const token = Cookies.get("token");
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        router.push("/login");
+        return;
+      }
+
       const response = await fetchData("get_time_left/", "POST", null);
       if (response.time_left !== undefined) {
         setTime(response.time_left);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching time:", error);
+
+      // Only logout for specific authentication errors, not network issues
+      if (
+        error instanceof Error &&
+        error.message?.includes("token") &&
+        error.message?.includes("invalid")
+      ) {
+        console.log("Invalid token error, logging out");
+        handleLogout();
+      }
+      // For network errors or other issues, just log and continue
+      console.log(
+        "Network or server error fetching time, will retry on next interval"
+      );
     }
-  }
+  }, [router, handleLogout]);
 
   useEffect(() => {
     getTime();
     getSharedList();
-  }, []);
+  }, [getTime, getSharedList]);
 
-  // Update countdown every second
+  // Update countdown every second - Fixed to prevent automatic logout issues
   useEffect(() => {
-    const timer = setInterval(() => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    timerRef.current = setInterval(() => {
       setTime((prevTime) => {
         const newTime = prevTime > 0 ? prevTime - 1 : 0;
+
+        // Redirect to credit page when time is 0
+        if (newTime === 0) {
+          const token = Cookies.get("token");
+          if (token) {
+            // Clear the timer before redirecting
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+            }
+            router.push("/credit");
+          }
+        }
+
         return newTime;
       });
-
-      // This log shows the state from the previous render due to closure
-
-      if (time <= 0) {
-        router.push("/credits");
-      }
     }, 1000);
+
+    // Cleanup function
     return () => {
-      clearInterval(timer);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     };
-  }, [time, router]);
+  }, [router, handleLogout]);
 
-  // Format time for display
+  // Format remaining seconds into HH:MM:SS so that `time` is used
   const formattedTime = new Date(time * 1000).toISOString().substr(11, 8);
-
-  // Logout function to remove token cookie
-  const handleLogout = () => {
-    Cookies.remove("token"); // Remove the authentication token cookie
-    // Redirect to login page after logout
-    router.push("/login");
-  };
 
   return (
     <>
